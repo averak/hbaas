@@ -1,6 +1,7 @@
 package transaction_context
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -28,4 +29,21 @@ func (c TransactionContext) IdempotencyKey() uuid.UUID {
 
 func (c TransactionContext) Now() time.Time {
 	return c.now
+}
+
+func (c TransactionContext) JSON() map[string]interface{} {
+	return map[string]interface{}{
+		"idempotencyKey": c.idempotencyKey,
+		"now":            c.now,
+	}
+}
+
+func (c TransactionContext) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		IdempotencyKey string `json:"idempotencyKey"`
+		Now            string `json:"now"`
+	}{
+		IdempotencyKey: c.idempotencyKey.String(),
+		Now:            c.now.Format(time.RFC3339Nano),
+	})
 }

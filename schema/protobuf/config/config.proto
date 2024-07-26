@@ -5,7 +5,9 @@ message Config {
   GoogleCloud google_cloud = 1;
   Logging logging = 2;
   Postgres postgres = 3;
-  bool debug = 4;
+  Cors cors = 4;
+  bool debug = 5;
+  int32 port = 6;
 }
 
 message GoogleCloud {
@@ -42,4 +44,13 @@ message Postgres {
   string user = 3;
   string password = 4;
   string database = 5;
+}
+
+message Cors {
+  repeated string allowed_origins = 1;
+  repeated string allowed_methods = 2;
+  repeated string allowed_headers = 3;
+  repeated string expose_headers = 4;
+  int64 max_age = 5;
+  bool allow_credentials = 6;
 }

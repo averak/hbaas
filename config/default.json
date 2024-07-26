@@ -15,5 +15,22 @@
     "password": "db",
     "database": "db"
   },
-  "debug": true
+  "cors": {
+    "allowed_origins": [
+      "*"
+    ],
+    "allowed_methods": [
+      "POST"
+    ],
+    "allowed_headers": [
+      "*"
+    ],
+    "expose_headers": [
+      "*"
+    ],
+    "max_age": 3600,
+    "allow_credentials": true
+  },
+  "debug": true,
+  "port": 8080
 }

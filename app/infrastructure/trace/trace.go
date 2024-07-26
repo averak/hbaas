@@ -37,8 +37,7 @@ func StartSpan(ctx context.Context, name string) (context.Context, *Span) {
 	return ctx, span
 }
 
-func Init(serviceName string, serviceVersion string, samplingRate float32) {
-	ctx := context.Background()
+func Init(ctx context.Context, serviceName string, serviceVersion string, samplingRate float32) {
 	exporter, err := texporter.New(texporter.WithProjectID(config.Get().GetGoogleCloud().GetProjectId()))
 	if err != nil {
 		// 計測できなくてもサービスは稼働できるので、ログだけ出してアプリケーションを続行する。

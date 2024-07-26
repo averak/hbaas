@@ -54,5 +54,3 @@ dependenciesRules:
         - "github.com/averak/hbaas/app/domain"
         - "github.com/averak/hbaas/app/usecase"
         - "github.com/averak/hbaas/pkg"
-      external:
-        - "github.com/google/uuid"
