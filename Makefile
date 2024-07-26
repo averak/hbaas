@@ -8,6 +8,14 @@ install-tools:
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 	go install github.com/fdaines/arch-go@latest
 	go install github.com/google/wire/cmd/wire@latest
+	go install github.com/volatiletech/sqlboiler/v4@${SQL_BOILER_VERSION}
+	go install github.com/volatiletech/sqlboiler/v4/drivers/sqlboiler-psql@latest
+
+.PHONY: format
+format:
+	go fmt ./...
+	golangci-lint run --issues-exit-code=0 --fix ./...
+	buf format --write
 
 BREAKING_CHANGE_BASE_BRANCH?=develop
 .PHONY: lint
@@ -25,6 +33,12 @@ codegen:
 	buf generate
 	sqlboiler psql --wipe --templates=templates/sqlboiler,$(shell go env GOPATH)/pkg/mod/github.com/volatiletech/sqlboiler/v4@${SQL_BOILER_VERSION}/templates/main
 
+.PHONY: test
+test:
+	mkdir -p tmp/coverage
+	HBAAS_CONFIG_FILEPATH=$(shell pwd)/config/default.json TZ=UTC go test -p=1 -coverpkg=./... -coverprofile=tmp/coverage/coverage.out ./...
+	go tool cover -html=tmp/coverage/coverage.out -o tmp/coverage/coverage.html
+
 .PHONY: db-migrate
 db-migrate:
 	docker-compose run --rm --build db-migrate
@@ -33,6 +47,13 @@ db-migrate:
 db-clean:
 	docker-compose down -v postgres
 	docker-compose up -d postgres
+
+.PHONY: build
+build: build-api-server
+
+.PHONE: build-api-server
+build-api-server:
+	CGO_ENABLED=0 go build -ldflags="$(GO_LDFLAGS)" -o tmp/build/api_server ./entrypoint/api_server
 
 .PHONY: run-api-server
 run-api-server:

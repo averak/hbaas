@@ -1,5 +1,7 @@
 # HBaaS
 
+![CI](https://github.com/averak/hbaas/workflows/CI/badge.svg)
+
 HBaaS (Hackathon Backend as a Service) is a service that provides general-purpose backend functionalities tailored for hackathons.
 You can use HBaaS to quickly build a backend for your hackathon project.
 
