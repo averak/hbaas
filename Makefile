@@ -36,8 +36,8 @@ codegen:
 .PHONY: test
 test:
 	mkdir -p tmp/coverage
-	HBAAS_CONFIG_FILEPATH=$(shell pwd)/config/default.json TZ=UTC go test -p=1 -coverpkg=./... -coverprofile=tmp/coverage/coverage.out ./...
-	go tool cover -html=tmp/coverage/coverage.out -o tmp/coverage/coverage.html
+	HBAAS_CONFIG_FILEPATH=$(shell pwd)/config/default.json TZ=UTC go test -p=1 -coverpkg=./... -coverprofile=tmp/coverage/cover.out ./...
+	go tool cover -html=tmp/coverage/cover.out -o tmp/coverage/cover.html
 
 .PHONY: db-migrate
 db-migrate:

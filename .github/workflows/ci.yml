@@ -27,7 +27,15 @@ jobs:
 
       - name: test
         run: |
-          make test
+          export HBAAS_CONFIG_FILEPATH=$(pwd)/config/default.json
+          export TZ=UTC
+          go test -json -p=1 -coverpkg=./... -coverprofile=cover.out ./... > result.json
+
+      - name: SonarCloud Scan
+        uses: sonarsource/sonarcloud-github-action@v2.3.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   code-check:
     runs-on: ubuntu-latest
