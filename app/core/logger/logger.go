@@ -3,6 +3,7 @@ package logger
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 	"runtime"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"github.com/averak/hbaas/app/core/config"
+	"github.com/averak/hbaas/app/core/ctxval"
 	pb "github.com/averak/hbaas/protobuf/config"
 )
 
@@ -106,6 +108,12 @@ func output(ctx context.Context, severity pb.Logging_Severity, msg any, file str
 			"version": sctx.version,
 		},
 	}
+
+	traceID, ok := ctxval.GetTraceID(ctx)
+	if ok {
+		data["trace"] = fmt.Sprintf("projects/%s/traces/%s", config.Get().GetGoogleCloud().GetProjectId(), traceID)
+	}
+
 	result, err := json.Marshal(data)
 	if err != nil {
 		logger.Printf("unable to marshal data: %v: error: %v", data, err)
