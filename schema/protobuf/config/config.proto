@@ -4,11 +4,18 @@ package com.github.averak.hbaas.config;
 message Config {
   GoogleCloud google_cloud = 1;
   Logging logging = 2;
-  bool debug = 3;
+  Postgres postgres = 3;
+  bool debug = 4;
 }
 
 message GoogleCloud {
   string project_id = 1;
+  Trace trace = 2;
+
+  message Trace {
+    bool enabled = 1;
+    float sampling_rate = 2;
+  }
 }
 
 message Logging {
@@ -27,4 +34,12 @@ message Logging {
     SEVERITY_ALERT = 700;
     SEVERITY_EMERGENCY = 800;
   }
+}
+
+message Postgres {
+  string host = 1;
+  int32 port = 2;
+  string user = 3;
+  string password = 4;
+  string database = 5;
 }

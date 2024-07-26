@@ -12,8 +12,8 @@ install-tools:
 BREAKING_CHANGE_BASE_BRANCH?=develop
 .PHONY: lint
 lint:
-	 golangci-lint run --issues-exit-code=1 ./...
-	 arch-go
+	golangci-lint run --issues-exit-code=1 ./...
+	arch-go
 	buf lint
 	buf breaking --against '.git#branch=$(BREAKING_CHANGE_BASE_BRANCH)'
 
@@ -23,6 +23,16 @@ codegen:
 	wire ./...
 	find . -type f \( -name '*.connect.go' -or -name '*.pb.go' \) -delete
 	buf generate
+	sqlboiler psql --wipe --templates=templates/sqlboiler,$(shell go env GOPATH)/pkg/mod/github.com/volatiletech/sqlboiler/v4@${SQL_BOILER_VERSION}/templates/main
+
+.PHONY: db-migrate
+db-migrate:
+	docker-compose run --rm --build db-migrate
+
+.PHONY: db-clean
+db-clean:
+	docker-compose down -v postgres
+	docker-compose up -d postgres
 
 .PHONY: run-api-server
 run-api-server:

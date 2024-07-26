@@ -1,9 +1,19 @@
 {
   "google_cloud": {
-    "project_id": "averak-hbaas-dev"
+    "project_id": "averak-hbaas-dev",
+    "trace": {
+      "enabled": false
+    }
   },
   "logging": {
     "severity": "SEVERITY_DEBUG"
+  },
+  "postgres": {
+    "host": "localhost",
+    "port": 5432,
+    "user": "db",
+    "password": "db",
+    "database": "db"
   },
   "debug": true
 }
