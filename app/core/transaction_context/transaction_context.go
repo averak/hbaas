@@ -7,6 +7,7 @@ import (
 )
 
 // TransactionContext は、機能によらずアプリケーション横断的なコンテキストを提供します。
+// ここでのトランザクションとは、ユーザ or システムが atomic に扱いたい処理単位を表し、RDB におけるトランザクションとは異なります。
 type TransactionContext struct {
 	idempotencyKey uuid.UUID
 	now            time.Time

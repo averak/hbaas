@@ -20,19 +20,20 @@ var (
 	once sync.Once
 )
 
-func NewConnection() transaction.Connection {
+func NewConnection() (transaction.Connection, error) {
+	var initErr error
 	once.Do(func() {
 		c, err := open()
 		if err != nil {
-			logger.Alert(context.Background(), map[string]any{
-				"message": "Failed to open db connection.",
-				"error":   err.Error(),
-			})
-			panic(err)
+			initErr = err
+			return
 		}
 		conn = &c
 	})
-	return conn
+	if initErr != nil {
+		return nil, initErr
+	}
+	return conn, nil
 }
 
 // open は DB に接続し、コネクションを返す。
