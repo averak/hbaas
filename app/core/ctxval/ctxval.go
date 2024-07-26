@@ -16,8 +16,8 @@ func GetTransactionContext(ctx context.Context) (transaction_context.Transaction
 	return v, ok
 }
 
-func SetTransactionContext(ctx context.Context, actx transaction_context.TransactionContext) context.Context {
-	return context.WithValue(ctx, actionContextKey{}, actx)
+func SetTransactionContext(ctx context.Context, tctx transaction_context.TransactionContext) context.Context {
+	return context.WithValue(ctx, actionContextKey{}, tctx)
 }
 
 func GetTraceID(ctx context.Context) (string, bool) {

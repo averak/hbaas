@@ -3,13 +3,18 @@ module github.com/averak/hbaas
 go 1.22
 
 require (
+	connectrpc.com/connect v1.16.2
+	connectrpc.com/grpchealth v1.3.0
+	connectrpc.com/grpcreflect v1.2.0
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.24.1
 	github.com/XSAM/otelsql v0.32.0
 	github.com/friendsofgo/errors v0.9.2
 	github.com/google/go-cmp v0.6.0
 	github.com/google/uuid v1.6.0
+	github.com/google/wire v0.6.0
 	github.com/huandu/go-sqlbuilder v1.28.0
 	github.com/lib/pq v1.10.6
+	github.com/rs/cors v1.11.0
 	github.com/stretchr/testify v1.9.0
 	github.com/volatiletech/sqlboiler/v4 v4.16.2
 	github.com/volatiletech/strmangle v0.0.6
@@ -17,6 +22,7 @@ require (
 	go.opentelemetry.io/otel v1.28.0
 	go.opentelemetry.io/otel/sdk v1.28.0
 	go.opentelemetry.io/otel/trace v1.28.0
+	golang.org/x/net v0.27.0
 	google.golang.org/protobuf v1.34.2
 )
 
@@ -45,7 +51,6 @@ require (
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.53.0 // indirect
 	go.opentelemetry.io/otel/metric v1.28.0 // indirect
 	golang.org/x/crypto v0.25.0 // indirect
-	golang.org/x/net v0.27.0 // indirect
 	golang.org/x/oauth2 v0.21.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/sys v0.22.0 // indirect
