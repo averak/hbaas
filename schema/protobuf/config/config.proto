@@ -1,0 +1,30 @@
+syntax = "proto3";
+package com.github.averak.hbaas.config;
+
+message Config {
+  GoogleCloud google_cloud = 1;
+  Logging logging = 2;
+  bool debug = 3;
+}
+
+message GoogleCloud {
+  string project_id = 1;
+}
+
+message Logging {
+  Severity severity = 1;
+
+  // Cloud Logging に定義された LogSeverity に対応する。
+  // https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry#logseverity
+  enum Severity {
+    SEVERITY_UNSPECIFIED = 0;
+    SEVERITY_DEBUG = 100;
+    SEVERITY_INFO = 200;
+    SEVERITY_NOTICE = 300;
+    SEVERITY_WARNING = 400;
+    SEVERITY_ERROR = 500;
+    SEVERITY_CRITICAL = 600;
+    SEVERITY_ALERT = 700;
+    SEVERITY_EMERGENCY = 800;
+  }
+}
