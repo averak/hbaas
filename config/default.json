@@ -1,0 +1,9 @@
+{
+  "google_cloud": {
+    "project_id": "averak-hbaas-dev"
+  },
+  "logging": {
+    "severity": "SEVERITY_DEBUG"
+  },
+  "debug": true
+}
