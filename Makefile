@@ -1,6 +1,6 @@
 BUF_VERSION=v1.34.0
 SQL_BOILER_VERSION=v4.16.2
-GO_LDFLAGS := -s -w -X github.com/canoecorp/ax-server/app/core/build_args.serverVersion=$(shell git describe --tags --always)
+GO_LDFLAGS := -s -w -X github.com/averak/hbaas/app/core/build_info.serverVersion=$(shell git describe --tags --always)
 
 .PHONY: install-tools
 install-tools:
@@ -23,3 +23,7 @@ codegen:
 	wire ./...
 	find . -type f \( -name '*.connect.go' -or -name '*.pb.go' \) -delete
 	buf generate
+
+.PHONY: run-api-server
+run-api-server:
+	go run -ldflags="$(GO_LDFLAGS)" ./entrypoint/api_server
