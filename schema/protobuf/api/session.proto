@@ -1,0 +1,21 @@
+syntax = "proto3";
+package api;
+
+import "google/protobuf/timestamp.proto";
+
+service SessionService {
+  // ID トークンを検証し、セッションを作成します。
+  // サインインとサインアップが統合されており、初回実行時はユーザ作成も同時に行います。
+  rpc AuthorizeV1(SessionServiceAuthorizeV1Request) returns (SessionServiceAuthorizeV1Response) {}
+}
+
+message SessionServiceAuthorizeV1Request {
+  // Firebase Auth の ID トークン
+  string id_token = 1;
+}
+
+message SessionServiceAuthorizeV1Response {
+  string user_id = 1;
+  string session_token = 2;
+  google.protobuf.Timestamp expires_at = 3;
+}

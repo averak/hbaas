@@ -1,0 +1,9 @@
+syntax = "proto3";
+package resource;
+
+// プロフィールのデータ構造はプロダクトによって異なり、汎化が難いためバイナリデータとして扱います。
+// この値は全ユーザに公開されるので、プライベートな属性は含めないようにしてください。
+message UserProfile {
+  string user_id = 1;
+  bytes data = 2;
+}

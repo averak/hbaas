@@ -1,0 +1,27 @@
+syntax = "proto3";
+package api;
+
+import "resource/user.proto";
+
+service UserService {
+  // プロフィール設定/言語設定などの初期設定が完了したら、この API を呼び出してください。
+  // ユーザがアクティベートされるまで、ユーザのプロフィールは非公開になります。
+  rpc ActivateV1(UserServiceActivateV1Request) returns (UserServiceActivateV1Response) {}
+
+  // プロフィール属性はプロダクトによって異なり、汎化が難いためバイナリデータとして扱います。
+  // プロダクトごとに、独自のスキーマを定義してください。
+  rpc EditProfileV1(UserServiceEditProfileV1Request) returns (UserServiceEditProfileV1Response) {}
+}
+
+message UserServiceActivateV1Request {
+}
+
+message UserServiceActivateV1Response {
+}
+
+
+message UserServiceEditProfileV1Request {
+  resource.UserProfile profile = 1;
+}
+
+message UserServiceEditProfileV1Response {}
