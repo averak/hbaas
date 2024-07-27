@@ -1,0 +1,56 @@
+version: 1
+
+threshold:
+  compliance: 100
+  coverage: 0
+
+dependenciesRules:
+  - package: "github.com/averak/hbaas/app/adapter.**"
+    shouldOnlyDependsOn:
+      internal:
+        - "github.com/averak/hbaas/app/adapter"
+        - "github.com/averak/hbaas/app/core"
+        - "github.com/averak/hbaas/app/domain"
+        - "github.com/averak/hbaas/app/infrastructure"
+        - "github.com/averak/hbaas/app/usecase"
+        - "github.com/averak/hbaas/pkg"
+        - "github.com/averak/hbaas/protobuf"
+        - "github.com/averak/hbaas/testutils"
+
+  - package: "github.com/averak/hbaas/app/core.**"
+    shouldOnlyDependsOn:
+      internal:
+        - "github.com/averak/hbaas/app/core"
+        - "github.com/averak/hbaas/pkg"
+        - "github.com/averak/hbaas/protobuf/config"
+      external:
+        - "github.com/google/uuid"
+        - "cloud.google.com/go/civil"
+        - "google.golang.org/protobuf"
+
+  - package: "github.com/averak/hbaas/app/domain.**"
+    shouldOnlyDependsOn:
+      internal:
+        - "github.com/averak/hbaas/app/core"
+        - "github.com/averak/hbaas/app/domain"
+        - "github.com/averak/hbaas/pkg"
+      external:
+        - "github.com/google/uuid"
+
+  - package: "github.com/averak/hbaas/app/infrastructure.**"
+    shouldOnlyDependsOn:
+      internal:
+        - "github.com/averak/hbaas/app/adapter/dao"
+        - "github.com/averak/hbaas/app/core"
+        - "github.com/averak/hbaas/app/domain"
+        - "github.com/averak/hbaas/app/infrastructure"
+        - "github.com/averak/hbaas/pkg"
+        - "github.com/averak/hbaas/protobuf"
+
+  - package: "github.com/averak/hbaas/app/usecase.**"
+    shouldOnlyDependsOn:
+      internal:
+        - "github.com/averak/hbaas/app/core"
+        - "github.com/averak/hbaas/app/domain"
+        - "github.com/averak/hbaas/app/usecase"
+        - "github.com/averak/hbaas/pkg"

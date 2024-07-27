@@ -1,0 +1,44 @@
+syntax = "proto3";
+package api;
+
+import "resource/kvs.proto";
+
+// プライベート KVS 機能とは、任意のデータを格納できる汎用的な Key-Value ストアです。
+// このデータは同じユーザの端末間で共有され、他ユーザには公開されません。
+service PrivateKVSService {
+  rpc GetETagV1(PrivateKVSServiceGetETagV1Request) returns (PrivateKVSServiceGetETagV1Response);
+
+  // KVS のエントリを検索します。
+  // ただし、検索条件が空の場合は空リストを返します。
+  rpc GetV1(PrivateKVSServiceGetV1Request) returns (PrivateKVSServiceGetV1Response);
+
+  // KVS にエントリを登録します。
+  // エントリの作成、更新、削除を行うことが可能で、value が空のエントリは削除されます。
+  rpc SetV1(PrivateKVSServiceSetV1Request) returns (PrivateKVSServiceSetV1Response);
+}
+
+message PrivateKVSServiceGetETagV1Request {}
+
+message PrivateKVSServiceGetETagV1Response {
+  string etag = 1;
+}
+
+message PrivateKVSServiceGetV1Request {
+  repeated resource.KVSCriterion criteria = 1;
+}
+
+message PrivateKVSServiceGetV1Response {
+  repeated resource.KVSEntry entries = 1;
+  string etag = 2;
+}
+
+message PrivateKVSServiceSetV1Request {
+  repeated resource.KVSEntry entries = 1;
+  // 同時更新の競合を楽観ロックで防ぐためのバージョン管理情報です。
+  // 最新の ETag を指定する必要があります。
+  string etag = 2;
+}
+
+message PrivateKVSServiceSetV1Response {
+  string etag = 1;
+}

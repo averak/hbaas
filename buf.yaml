@@ -1,0 +1,14 @@
+version: v2
+modules:
+  - path: schema/protobuf
+lint:
+  use:
+    - DEFAULT
+  except:
+    - PACKAGE_DIRECTORY_MATCH
+    - PACKAGE_VERSION_SUFFIX
+breaking:
+  use:
+    - FILE
+  ignore:
+    - schema/protobuf/config

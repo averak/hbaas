@@ -1,0 +1,43 @@
+{
+  "google_cloud": {
+    "project_id": "averak-hbaas-dev",
+    "firebase": {
+      "use_stub": true
+    },
+    "trace": {
+      "enabled": false
+    }
+  },
+  "logging": {
+    "severity": "SEVERITY_DEBUG"
+  },
+  "postgres": {
+    "host": "localhost",
+    "port": 5432,
+    "user": "db",
+    "password": "db",
+    "database": "db"
+  },
+  "cors": {
+    "allowed_origins": [
+      "*"
+    ],
+    "allowed_methods": [
+      "POST"
+    ],
+    "allowed_headers": [
+      "*"
+    ],
+    "expose_headers": [
+      "*"
+    ],
+    "max_age": 3600,
+    "allow_credentials": true
+  },
+  "session": {
+    "expiration_seconds": 3600,
+    "secret_key": "********************************"
+  },
+  "debug": true,
+  "port": 8080
+}
