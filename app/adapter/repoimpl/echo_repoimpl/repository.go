@@ -13,17 +13,13 @@ import (
 
 type Repository struct{}
 
-func New() repository.EchoRepository {
+func NewRepository() repository.EchoRepository {
 	return &Repository{}
 }
 
 func (r Repository) Save(ctx context.Context, tx transaction.Transaction, echos ...model.Echo) error {
 	ctx, span := trace.StartSpan(ctx, "echo_repoimpl.Save")
 	defer span.End()
-
-	if len(echos) == 0 {
-		return nil
-	}
 
 	dtos := make([]*dao.Echo, len(echos))
 	for i, echo := range echos {

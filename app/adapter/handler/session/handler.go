@@ -18,8 +18,8 @@ type handler struct {
 	uc *session_usecase.Usecase
 }
 
-func New(uc *session_usecase.Usecase) apiconnect.SessionServiceHandler {
-	return handler{uc: uc}
+func NewHandler(uc *session_usecase.Usecase) apiconnect.SessionServiceHandler {
+	return &handler{uc: uc}
 }
 
 func (h handler) AuthorizeV1(ctx context.Context, c *connect.Request[api.SessionServiceAuthorizeV1Request]) (*connect.Response[api.SessionServiceAuthorizeV1Response], error) {

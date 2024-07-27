@@ -16,7 +16,7 @@ import (
 
 type Repository struct{}
 
-func New() repository.AuthenticationRepository {
+func NewRepository() repository.AuthenticationRepository {
 	return &Repository{}
 }
 

@@ -15,8 +15,8 @@ type handler struct {
 	uc *echo_usecase.Usecase
 }
 
-func New(uc *echo_usecase.Usecase) debugconnect.EchoServiceHandler {
-	return handler{uc: uc}
+func NewHandler(uc *echo_usecase.Usecase) debugconnect.EchoServiceHandler {
+	return &handler{uc: uc}
 }
 
 func (h handler) EchoV1(ctx context.Context, c *connect.Request[debug.EchoServiceEchoV1Request]) (*connect.Response[debug.EchoServiceEchoV1Response], error) {

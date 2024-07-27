@@ -199,7 +199,7 @@ func newMux(t *testing.T, baasCli google_cloud.FirebaseClient) *http.ServeMux {
 	opts := connect.WithInterceptors(interceptor.New()...)
 	mux := http.NewServeMux()
 	mux.Handle(apiconnect.NewSessionServiceHandler(
-		New(session_usecase.New(conn, usecaseimpl.NewFirebaseIdentityVerifier(baasCli), authentication_repoimpl.New(), user_repoimpl.New())),
+		NewHandler(session_usecase.NewUsecase(conn, usecaseimpl.NewFirebaseIdentityVerifier(baasCli), authentication_repoimpl.NewRepository(), user_repoimpl.NewRepository())),
 		opts,
 	))
 	return mux

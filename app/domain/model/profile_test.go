@@ -3,6 +3,7 @@ package model
 import (
 	"testing"
 
+	"github.com/averak/hbaas/app/core/numunit"
 	"github.com/averak/hbaas/testutils/faker"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -23,11 +24,11 @@ func TestNewUserProfile(t *testing.T) {
 			name: "バイナリサイズ <= 1KiB の場合 => 成功",
 			args: args{
 				userID: faker.UUIDv5("u1"),
-				v:      make([]byte, 1024),
+				v:      make([]byte, numunit.KiB),
 			},
 			want: UserProfile{
 				UserID: faker.UUIDv5("u1"),
-				raw:    make([]byte, 1024),
+				raw:    make([]byte, numunit.KiB),
 			},
 			wantErr: assert.NoError,
 		},

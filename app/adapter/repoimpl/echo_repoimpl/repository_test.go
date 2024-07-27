@@ -103,7 +103,7 @@ func TestRepository_Save(t *testing.T) {
 
 			var dtos []*dao.Echo
 			err := conn.BeginRwTransaction(context.Background(), func(ctx context.Context, tx transaction.Transaction) error {
-				r := New()
+				r := NewRepository()
 				err := r.Save(ctx, tx, when.echos...)
 				if err != nil {
 					return err

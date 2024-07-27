@@ -25,7 +25,7 @@ func NewUserProfile(userID uuid.UUID, v []byte) (UserProfile, error) {
 	}
 	return UserProfile{
 		UserID: userID,
-		raw:    make([]byte, 1024),
+		raw:    v,
 	}, nil
 }
 
