@@ -49,9 +49,3 @@ func WithSpoofingUserID(userID uuid.UUID) Option {
 		header.Add(string(mdval.DebugSpoofingUserIDKey), userID.String())
 	}
 }
-
-func WithClientVersion(version string) Option {
-	return func(header http.Header) {
-		header.Add(string(mdval.ClientVersionKey), version)
-	}
-}

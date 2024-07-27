@@ -6,13 +6,19 @@ message Config {
   Logging logging = 2;
   Postgres postgres = 3;
   Cors cors = 4;
-  bool debug = 5;
-  int32 port = 6;
+  Session session = 5;
+  bool debug = 6;
+  int32 port = 7;
 }
 
 message GoogleCloud {
   string project_id = 1;
-  Trace trace = 2;
+  Firebase firebase = 2;
+  Trace trace = 3;
+
+  message Firebase {
+    bool use_stub = 1;
+  }
 
   message Trace {
     bool enabled = 1;
@@ -53,4 +59,10 @@ message Cors {
   repeated string expose_headers = 4;
   int64 max_age = 5;
   bool allow_credentials = 6;
+}
+
+message Session {
+  int64 expiration_seconds = 1;
+  // HMAC-SHA256 の秘密鍵 (32文字の文字列で指定する)
+  string secret_key = 2;
 }

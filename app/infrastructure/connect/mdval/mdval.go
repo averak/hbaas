@@ -17,7 +17,6 @@ type (
 const (
 	IdempotencyKey         incomingHeaderKey = "x-idempotency-key"
 	SessionTokenKey        incomingHeaderKey = "x-session-token"
-	ClientVersionKey       incomingHeaderKey = "x-client-version"
 	DebugAdjustedTimeKey   incomingHeaderKey = "x-debug-adjustment-timestamp"
 	DebugSpoofingUserIDKey incomingHeaderKey = "x-debug-spoofing-uid"
 
