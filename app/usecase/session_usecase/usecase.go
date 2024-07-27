@@ -15,7 +15,7 @@ type Usecase struct {
 	userRepo         repository.UserRepository
 }
 
-func New(
+func NewUsecase(
 	conn transaction.Connection,
 	identityVerifier IdentityVerifier,
 	authRepo repository.AuthenticationRepository,

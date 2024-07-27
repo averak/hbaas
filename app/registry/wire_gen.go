@@ -10,10 +10,12 @@ import (
 	"context"
 	"github.com/averak/hbaas/app/adapter/handler"
 	"github.com/averak/hbaas/app/adapter/handler/debug/echo"
+	"github.com/averak/hbaas/app/adapter/handler/global_kvs"
 	"github.com/averak/hbaas/app/adapter/handler/session"
 	"github.com/averak/hbaas/app/adapter/repoimpl"
 	"github.com/averak/hbaas/app/adapter/repoimpl/authentication_repoimpl"
 	"github.com/averak/hbaas/app/adapter/repoimpl/echo_repoimpl"
+	"github.com/averak/hbaas/app/adapter/repoimpl/global_kvs_repoimpl"
 	"github.com/averak/hbaas/app/adapter/repoimpl/user_repoimpl"
 	"github.com/averak/hbaas/app/adapter/usecaseimpl"
 	"github.com/averak/hbaas/app/core/config"
@@ -21,6 +23,7 @@ import (
 	"github.com/averak/hbaas/app/infrastructure/google_cloud"
 	"github.com/averak/hbaas/app/usecase"
 	"github.com/averak/hbaas/app/usecase/echo_usecase"
+	"github.com/averak/hbaas/app/usecase/global_kvs_usecase"
 	"github.com/averak/hbaas/app/usecase/session_usecase"
 	"github.com/averak/hbaas/testutils/testgoogle_cloud"
 	"github.com/google/wire"
@@ -34,19 +37,22 @@ func InitializeAPIServerMux(ctx context.Context) (*http.ServeMux, error) {
 	if err != nil {
 		return nil, err
 	}
+	globalKVSRepository := global_kvs_repoimpl.NewRepository()
+	usecase := global_kvs_usecase.NewUsecase(connection, globalKVSRepository)
+	globalKVSServiceHandler := global_kvs.NewHandler(usecase)
 	firebaseClient, err := newFirebaseClient(ctx)
 	if err != nil {
 		return nil, err
 	}
 	identityVerifier := usecaseimpl.NewFirebaseIdentityVerifier(firebaseClient)
-	authenticationRepository := authentication_repoimpl.New()
-	userRepository := user_repoimpl.New()
-	usecase := session_usecase.New(connection, identityVerifier, authenticationRepository, userRepository)
-	sessionServiceHandler := session.New(usecase)
-	echoRepository := echo_repoimpl.New()
-	echo_usecaseUsecase := echo_usecase.New(connection, echoRepository)
-	echoServiceHandler := echo.New(echo_usecaseUsecase)
-	serveMux := handler.New(sessionServiceHandler, echoServiceHandler)
+	authenticationRepository := authentication_repoimpl.NewRepository()
+	userRepository := user_repoimpl.NewRepository()
+	session_usecaseUsecase := session_usecase.NewUsecase(connection, identityVerifier, authenticationRepository, userRepository)
+	sessionServiceHandler := session.NewHandler(session_usecaseUsecase)
+	echoRepository := echo_repoimpl.NewRepository()
+	echo_usecaseUsecase := echo_usecase.NewUsecase(connection, echoRepository)
+	echoServiceHandler := echo.NewHandler(echo_usecaseUsecase)
+	serveMux := handler.New(globalKVSServiceHandler, sessionServiceHandler, echoServiceHandler)
 	return serveMux, nil
 }
 

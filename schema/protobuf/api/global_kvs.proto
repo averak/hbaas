@@ -1,0 +1,30 @@
+syntax = "proto3";
+package api;
+
+import "resource/kvs.proto";
+
+// グローバル KVS 機能とは、任意のデータを格納できる汎用的な Key-Value ストアです。
+// このデータは全プレイヤーで共有され、誰でも読み書きが可能です。
+service GlobalKVSService {
+  // KVS のエントリを検索します。
+  // ただし、検索条件が空の場合は空リストを返します。
+  rpc GetV1(GlobalKVSServiceGetV1Request) returns (GlobalKVSServiceGetV1Response);
+
+  // KVS にエントリを登録します。
+  // エントリの作成、更新、削除を行うことが可能で、value が空のエントリは削除されます。
+  rpc SetV1(GlobalKVSServiceSetV1Request) returns (GlobalKVSServiceSetV1Response);
+}
+
+message GlobalKVSServiceGetV1Request {
+  repeated resource.KVSCriterion criteria = 1;
+}
+
+message GlobalKVSServiceGetV1Response {
+  repeated resource.KVSEntry entries = 1;
+}
+
+message GlobalKVSServiceSetV1Request {
+  repeated resource.KVSEntry entries = 1;
+}
+
+message GlobalKVSServiceSetV1Response {}

@@ -10,7 +10,7 @@ type Usecase struct {
 	echoRepo repository.EchoRepository
 }
 
-func New(conn transaction.Connection, echoRepo repository.EchoRepository) *Usecase {
+func NewUsecase(conn transaction.Connection, echoRepo repository.EchoRepository) *Usecase {
 	return &Usecase{
 		conn:     conn,
 		echoRepo: echoRepo,

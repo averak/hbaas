@@ -30,6 +30,15 @@ CREATE UNIQUE INDEX "uq__user_authentications__baas_user_id" ON "user_authentica
 -- その他
 -----------------------------------
 
+CREATE TABLE "global_kvs_entries"
+(
+    "key"        VARCHAR(255) NOT NULL,
+    "value"      BYTEA        NOT NULL,
+    "created_at" TIMESTAMP    NOT NULL,
+    "updated_at" TIMESTAMP    NOT NULL,
+    PRIMARY KEY ("key")
+);
+
 CREATE TABLE "echos"
 (
     "id"         UUID         NOT NULL,

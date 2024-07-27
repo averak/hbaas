@@ -1,0 +1,23 @@
+syntax = "proto3";
+package resource;
+
+message KVSEntry {
+  // 前方一致でエントリ検索する機能を提供しているので、関連する key には同一のプレフィックスを付与することを推奨します。
+  string key = 1;
+  // 最大 100 KiB まで格納できる
+  bytes value = 2;
+}
+
+// KVS エントリの検索条件
+message KVSCriterion {
+  enum MatchingType {
+    MATCHING_TYPE_UNSPECIFIED = 0;
+    // 完全一致
+    MATCHING_TYPE_EXACT_MATCH = 1;
+    // 前方一致
+    MATCHING_TYPE_PREFIX_MATCH = 2;
+  }
+
+  string key = 1;
+  MatchingType matching_type = 2;
+}

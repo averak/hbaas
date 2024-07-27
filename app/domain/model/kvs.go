@@ -9,73 +9,74 @@ import (
 )
 
 var (
-	ErrKVEntryValueTooLarge      = errors.New("value size is too large")
-	ErrPrivateKVRevisionMismatch = errors.New("private KVS revision mismatch")
+	ErrKVSEntryValueTooLarge  = errors.New("value size is too large")
+	ErrPrivateKVSETagMismatch = errors.New("private KVS etag mismatch")
 )
 
-// GlobalKVBucket は、全ユーザで共有される KVS を表します。
+// GlobalKVSBucket は、全ユーザで共有される KVS を表します。
 // 専用 API が提供されていないプロダクト固有の機能は、この機能で代用される想定です。
-type GlobalKVBucket struct {
-	KVBucket
+type GlobalKVSBucket struct {
+	KVSBucket
 }
 
-func NewGlobalKVBucket(entries ...KVEntry) GlobalKVBucket {
-	return GlobalKVBucket{
-		KVBucket: NewKVBucket(entries...),
+func NewGlobalKVSBucket(entries []KVSEntry) GlobalKVSBucket {
+	return GlobalKVSBucket{
+		KVSBucket: NewKVSBucket(entries),
 	}
 }
 
-// PrivateKVBucket はユーザごとに独立した KVS で、別ユーザには公開されません。
-type PrivateKVBucket struct {
-	KVBucket
+// PrivateKVSBucket はユーザごとに独立した KVS で、他ユーザには公開されません。
+type PrivateKVSBucket struct {
+	KVSBucket
 
-	UserID   uuid.UUID
-	revision uuid.UUID
+	UserID uuid.UUID
+	etag   uuid.UUID
 }
 
-func NewPrivateKVBucket(userID uuid.UUID, revision uuid.UUID, entries ...KVEntry) PrivateKVBucket {
-	return PrivateKVBucket{
-		KVBucket: NewKVBucket(entries...),
-		UserID:   userID,
-		revision: revision,
+func NewPrivateKVSBucket(userID uuid.UUID, etag uuid.UUID, entries []KVSEntry) PrivateKVSBucket {
+	return PrivateKVSBucket{
+		KVSBucket: NewKVSBucket(entries),
+		UserID:    userID,
+		etag:      etag,
 	}
 }
 
-func (m *PrivateKVBucket) Set(revision uuid.UUID, entries ...KVEntry) error {
-	if m.revision != revision {
-		return ErrPrivateKVRevisionMismatch
+func (m *PrivateKVSBucket) Set(etag uuid.UUID, entries []KVSEntry) error {
+	// 同時更新の競合を楽観ロックで防ぐために、クライアントは etag を取得してから更新を行う必要がある。
+	if m.etag != etag {
+		return ErrPrivateKVSETagMismatch
 	}
-	m.KVBucket.Set(entries...)
-	m.revision = uuid.New()
+	m.KVSBucket.Set(entries...)
+	m.etag = uuid.New()
 	return nil
 }
 
-func (m PrivateKVBucket) Revision() uuid.UUID {
-	return m.revision
+func (m PrivateKVSBucket) ETag() uuid.UUID {
+	return m.etag
 }
 
-// KVBucket は、KVS におけるエントリの配列操作を提供します。
-type KVBucket struct {
-	raw []KVEntry
+// KVSBucket は、KVS におけるエントリの配列操作を提供します。
+type KVSBucket struct {
+	raw []KVSEntry
 }
 
-func NewKVBucket(entries ...KVEntry) KVBucket {
-	return KVBucket{
+func NewKVSBucket(entries []KVSEntry) KVSBucket {
+	return KVSBucket{
 		raw: entries,
 	}
 }
 
-func (m KVBucket) Raw() []KVEntry {
+func (m KVSBucket) Raw() []KVSEntry {
 	return m.raw
 }
 
-func (m KVBucket) HasKey(key string) bool {
-	return slices.ContainsFunc(m.raw, func(e KVEntry) bool {
+func (m KVSBucket) HasKey(key string) bool {
+	return slices.ContainsFunc(m.raw, func(e KVSEntry) bool {
 		return e.Key == key
 	})
 }
 
-func (m *KVBucket) Set(entries ...KVEntry) {
+func (m *KVSBucket) Set(entries ...KVSEntry) {
 	for _, e := range entries {
 		if m.HasKey(e.Key) {
 			for i := range m.raw {
@@ -89,26 +90,26 @@ func (m *KVBucket) Set(entries ...KVEntry) {
 	}
 }
 
-// KVEntry は、KVS に読み書きされるデータの最小単位です。
-type KVEntry struct {
+// KVSEntry は、KVS に読み書きされるデータの最小単位です。
+type KVSEntry struct {
 	Key   string
 	Value []byte
 }
 
-func NewKVEntry(key string, value []byte) (KVEntry, error) {
+func NewKVSEntry(key string, value []byte) (KVSEntry, error) {
 	// クライアントは、膨大なデータを1エントリにまとめる or 複数シャードに分割することができる。
 	// どちらが有利かはデータの I/O 比率に依存するので、無理に最適化せず 100KiB を上限とする。
 	if len(value) > 100*numunit.KiB {
-		return KVEntry{}, ErrKVEntryValueTooLarge
+		return KVSEntry{}, ErrKVSEntryValueTooLarge
 	}
 
-	return KVEntry{
+	return KVSEntry{
 		Key:   key,
 		Value: value,
 	}, nil
 }
 
-func (e KVEntry) IsEmpty() bool {
+func (e KVSEntry) IsEmpty() bool {
 	return len(e.Value) == 0
 }
 
