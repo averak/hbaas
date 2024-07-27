@@ -10,11 +10,19 @@ import (
 	"context"
 	"github.com/averak/hbaas/app/adapter/handler"
 	"github.com/averak/hbaas/app/adapter/handler/debug/echo"
+	"github.com/averak/hbaas/app/adapter/handler/session"
 	"github.com/averak/hbaas/app/adapter/repoimpl"
+	"github.com/averak/hbaas/app/adapter/repoimpl/authentication_repoimpl"
 	"github.com/averak/hbaas/app/adapter/repoimpl/echo_repoimpl"
+	"github.com/averak/hbaas/app/adapter/repoimpl/user_repoimpl"
+	"github.com/averak/hbaas/app/adapter/usecaseimpl"
+	"github.com/averak/hbaas/app/core/config"
 	"github.com/averak/hbaas/app/infrastructure/db"
+	"github.com/averak/hbaas/app/infrastructure/google_cloud"
 	"github.com/averak/hbaas/app/usecase"
 	"github.com/averak/hbaas/app/usecase/echo_usecase"
+	"github.com/averak/hbaas/app/usecase/session_usecase"
+	"github.com/averak/hbaas/testutils/testgoogle_cloud"
 	"github.com/google/wire"
 	"net/http"
 )
@@ -26,13 +34,29 @@ func InitializeAPIServerMux(ctx context.Context) (*http.ServeMux, error) {
 	if err != nil {
 		return nil, err
 	}
+	firebaseClient, err := newFirebaseClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+	identityVerifier := usecaseimpl.NewFirebaseIdentityVerifier(firebaseClient)
+	authenticationRepository := authentication_repoimpl.New()
+	userRepository := user_repoimpl.New()
+	usecase := session_usecase.New(connection, identityVerifier, authenticationRepository, userRepository)
+	sessionServiceHandler := session.New(usecase)
 	echoRepository := echo_repoimpl.New()
-	usecase := echo_usecase.New(connection, echoRepository)
-	echoServiceHandler := echo.New(usecase)
-	serveMux := handler.New(echoServiceHandler)
+	echo_usecaseUsecase := echo_usecase.New(connection, echoRepository)
+	echoServiceHandler := echo.New(echo_usecaseUsecase)
+	serveMux := handler.New(sessionServiceHandler, echoServiceHandler)
 	return serveMux, nil
 }
 
 // wire.go:
 
-var SuperSet = wire.NewSet(repoimpl.SuperSet, usecase.SuperSet, db.NewConnection)
+var SuperSet = wire.NewSet(repoimpl.SuperSet, usecaseimpl.SuperSet, usecase.SuperSet, db.NewConnection, newFirebaseClient)
+
+func newFirebaseClient(ctx context.Context) (google_cloud.FirebaseClient, error) {
+	if config.Get().GetGoogleCloud().GetFirebase().GetUseStub() {
+		return testgoogle_cloud.NewFirebaseClientStub(), nil
+	}
+	return google_cloud.NewFirebaseClient(ctx)
+}

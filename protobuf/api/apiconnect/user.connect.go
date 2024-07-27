@@ -33,6 +33,8 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
+	// UserServiceActivateV1Procedure is the fully-qualified name of the UserService's ActivateV1 RPC.
+	UserServiceActivateV1Procedure = "/api.UserService/ActivateV1"
 	// UserServiceEditProfileV1Procedure is the fully-qualified name of the UserService's EditProfileV1
 	// RPC.
 	UserServiceEditProfileV1Procedure = "/api.UserService/EditProfileV1"
@@ -41,11 +43,15 @@ const (
 // These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
 var (
 	userServiceServiceDescriptor             = api.File_api_user_proto.Services().ByName("UserService")
+	userServiceActivateV1MethodDescriptor    = userServiceServiceDescriptor.Methods().ByName("ActivateV1")
 	userServiceEditProfileV1MethodDescriptor = userServiceServiceDescriptor.Methods().ByName("EditProfileV1")
 )
 
 // UserServiceClient is a client for the api.UserService service.
 type UserServiceClient interface {
+	// プロフィール設定/言語設定などの初期設定が完了したら、この API を呼び出してください。
+	// ユーザがアクティベートされるまで、ユーザのプロフィールは非公開になります。
+	ActivateV1(context.Context, *connect.Request[api.UserServiceActivateV1Request]) (*connect.Response[api.UserServiceActivateV1Response], error)
 	// プロフィール属性はプロダクトによって異なり、汎化が難いためバイナリデータとして扱います。
 	// プロダクトごとに、独自のスキーマを定義してください。
 	EditProfileV1(context.Context, *connect.Request[api.UserServiceEditProfileV1Request]) (*connect.Response[api.UserServiceEditProfileV1Response], error)
@@ -61,6 +67,12 @@ type UserServiceClient interface {
 func NewUserServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) UserServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
 	return &userServiceClient{
+		activateV1: connect.NewClient[api.UserServiceActivateV1Request, api.UserServiceActivateV1Response](
+			httpClient,
+			baseURL+UserServiceActivateV1Procedure,
+			connect.WithSchema(userServiceActivateV1MethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
 		editProfileV1: connect.NewClient[api.UserServiceEditProfileV1Request, api.UserServiceEditProfileV1Response](
 			httpClient,
 			baseURL+UserServiceEditProfileV1Procedure,
@@ -72,7 +84,13 @@ func NewUserServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 
 // userServiceClient implements UserServiceClient.
 type userServiceClient struct {
+	activateV1    *connect.Client[api.UserServiceActivateV1Request, api.UserServiceActivateV1Response]
 	editProfileV1 *connect.Client[api.UserServiceEditProfileV1Request, api.UserServiceEditProfileV1Response]
+}
+
+// ActivateV1 calls api.UserService.ActivateV1.
+func (c *userServiceClient) ActivateV1(ctx context.Context, req *connect.Request[api.UserServiceActivateV1Request]) (*connect.Response[api.UserServiceActivateV1Response], error) {
+	return c.activateV1.CallUnary(ctx, req)
 }
 
 // EditProfileV1 calls api.UserService.EditProfileV1.
@@ -82,6 +100,9 @@ func (c *userServiceClient) EditProfileV1(ctx context.Context, req *connect.Requ
 
 // UserServiceHandler is an implementation of the api.UserService service.
 type UserServiceHandler interface {
+	// プロフィール設定/言語設定などの初期設定が完了したら、この API を呼び出してください。
+	// ユーザがアクティベートされるまで、ユーザのプロフィールは非公開になります。
+	ActivateV1(context.Context, *connect.Request[api.UserServiceActivateV1Request]) (*connect.Response[api.UserServiceActivateV1Response], error)
 	// プロフィール属性はプロダクトによって異なり、汎化が難いためバイナリデータとして扱います。
 	// プロダクトごとに、独自のスキーマを定義してください。
 	EditProfileV1(context.Context, *connect.Request[api.UserServiceEditProfileV1Request]) (*connect.Response[api.UserServiceEditProfileV1Response], error)
@@ -93,6 +114,12 @@ type UserServiceHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewUserServiceHandler(svc UserServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	userServiceActivateV1Handler := connect.NewUnaryHandler(
+		UserServiceActivateV1Procedure,
+		svc.ActivateV1,
+		connect.WithSchema(userServiceActivateV1MethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
 	userServiceEditProfileV1Handler := connect.NewUnaryHandler(
 		UserServiceEditProfileV1Procedure,
 		svc.EditProfileV1,
@@ -101,6 +128,8 @@ func NewUserServiceHandler(svc UserServiceHandler, opts ...connect.HandlerOption
 	)
 	return "/api.UserService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
+		case UserServiceActivateV1Procedure:
+			userServiceActivateV1Handler.ServeHTTP(w, r)
 		case UserServiceEditProfileV1Procedure:
 			userServiceEditProfileV1Handler.ServeHTTP(w, r)
 		default:
@@ -111,6 +140,10 @@ func NewUserServiceHandler(svc UserServiceHandler, opts ...connect.HandlerOption
 
 // UnimplementedUserServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedUserServiceHandler struct{}
+
+func (UnimplementedUserServiceHandler) ActivateV1(context.Context, *connect.Request[api.UserServiceActivateV1Request]) (*connect.Response[api.UserServiceActivateV1Response], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.UserService.ActivateV1 is not implemented"))
+}
 
 func (UnimplementedUserServiceHandler) EditProfileV1(context.Context, *connect.Request[api.UserServiceEditProfileV1Request]) (*connect.Response[api.UserServiceEditProfileV1Response], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.UserService.EditProfileV1 is not implemented"))

@@ -13,12 +13,9 @@ service UserService {
   rpc EditProfileV1(UserServiceEditProfileV1Request) returns (UserServiceEditProfileV1Response) {}
 }
 
-message UserServiceActivateV1Request {
-}
+message UserServiceActivateV1Request {}
 
-message UserServiceActivateV1Response {
-}
-
+message UserServiceActivateV1Response {}
 
 message UserServiceEditProfileV1Request {
   resource.UserProfile profile = 1;

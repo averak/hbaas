@@ -9,6 +9,7 @@ import (
 	"github.com/averak/hbaas/app/domain/repository/transaction"
 	"github.com/averak/hbaas/app/infrastructure/db"
 	"github.com/huandu/go-sqlbuilder"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
 var tableNames []string
@@ -47,5 +48,14 @@ func Teardown(t *testing.T) {
 	})
 	if err != nil {
 		t.Fatalf("failed to teardown: %v", err)
+	}
+}
+
+func ShowSQL(t *testing.T) func() {
+	t.Helper()
+
+	boil.DebugMode = true
+	return func() {
+		boil.DebugMode = false
 	}
 }
