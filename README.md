@@ -1,6 +1,8 @@
 # HBaaS
 
 ![CI](https://github.com/averak/hbaas/workflows/CI/badge.svg)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=averak_hbaas&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=averak_hbaas)
+
 
 HBaaS (Hackathon Backend as a Service) is a service that provides general-purpose backend functionalities tailored for hackathons.
 You can use HBaaS to quickly build a backend for your hackathon project.
