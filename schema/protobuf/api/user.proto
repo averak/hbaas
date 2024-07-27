@@ -1,16 +1,39 @@
 syntax = "proto3";
 package api;
 
+import "custom_option/custom_option.proto";
 import "resource/user.proto";
 
 service UserService {
   // プロフィール設定/言語設定などの初期設定が完了したら、この API を呼び出してください。
   // ユーザがアクティベートされるまで、ユーザのプロフィールは非公開になります。
-  rpc ActivateV1(UserServiceActivateV1Request) returns (UserServiceActivateV1Response) {}
+  rpc ActivateV1(UserServiceActivateV1Request) returns (UserServiceActivateV1Response) {
+    option (custom_option.method_option) = {
+      skip_authenticate: true
+      method_error_definitions: [
+        {
+          code: METHOD_RESOURCE_CONFLICT
+          severity: ERROR_SEVERITY_WARNING
+          message: "The user has already been deactivated."
+        }
+      ]
+    };
+  }
 
   // プロフィール属性はプロダクトによって異なり、汎化が難いためバイナリデータとして扱います。
   // プロダクトごとに、独自のスキーマを定義してください。
-  rpc EditProfileV1(UserServiceEditProfileV1Request) returns (UserServiceEditProfileV1Response) {}
+  rpc EditProfileV1(UserServiceEditProfileV1Request) returns (UserServiceEditProfileV1Response) {
+    option (custom_option.method_option) = {
+      skip_authenticate: true
+      method_error_definitions: [
+        {
+          code: METHOD_ILLEGAL_ARGUMENT
+          severity: ERROR_SEVERITY_WARNING
+          message: "The value bytes must be less than or equal to 1KiB."
+        }
+      ]
+    };
+  }
 }
 
 message UserServiceActivateV1Request {}
