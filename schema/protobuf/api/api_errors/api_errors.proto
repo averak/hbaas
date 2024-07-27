@@ -99,7 +99,7 @@ enum ErrorSeverity {
 
 message ErrorDetail {
   int64 error_code = 1;
-  int64 retry_duration_millis = 2;
+  ErrorHandlingType error_handling_type = 2;
 }
 
 extend google.protobuf.EnumValueOptions {

@@ -7,7 +7,9 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/averak/hbaas/app/core/logger"
+	"github.com/averak/hbaas/app/infrastructure/connect/error_response"
 	"github.com/averak/hbaas/app/infrastructure/connect/mdval"
+	"github.com/averak/hbaas/protobuf/api/api_errors"
 )
 
 type (
@@ -45,11 +47,45 @@ func NewAccessLogInterceptor() connect.UnaryInterceptorFunc {
 			} else {
 				payload["error"] = err.Error()
 
-				if errors.Is(ctx.Err(), context.Canceled) {
+				var (
+					e        error_response.Error
+					severity api_errors.ErrorSeverity
+				)
+				if errors.As(err, &e) {
+					severity = e.Severity()
+				} else if errors.Is(ctx.Err(), context.Canceled) {
 					// クライアントが切断した場合は Warning ログを出す。
-					logger.Warning(ctx, payload)
+					severity = api_errors.ErrorSeverity_ERROR_SEVERITY_WARNING
 				} else {
+					severity = api_errors.ErrorSeverity_ERROR_SEVERITY_ERROR
+				}
+
+				switch severity {
+				case api_errors.ErrorSeverity_ERROR_SEVERITY_UNSPECIFIED:
+					// API スキーマで severity の設定漏れで UNSPECIFIED になることがあるが、その場合は ERROR として扱う。
 					logger.Error(ctx, payload)
+
+					// severity の設定漏れでクライアントにエラーを返すわけにはいかないが、不備を検知するためのログは出しておく。
+					logger.Error(ctx, map[string]any{
+						"error":     "severity is not specified",
+						"procedure": req.Spec().Procedure,
+					})
+				case api_errors.ErrorSeverity_ERROR_SEVERITY_DEBUG:
+					logger.Debug(ctx, payload)
+				case api_errors.ErrorSeverity_ERROR_SEVERITY_INFO:
+					logger.Info(ctx, payload)
+				case api_errors.ErrorSeverity_ERROR_SEVERITY_NOTICE:
+					logger.Notice(ctx, payload)
+				case api_errors.ErrorSeverity_ERROR_SEVERITY_WARNING:
+					logger.Warning(ctx, payload)
+				case api_errors.ErrorSeverity_ERROR_SEVERITY_ERROR:
+					logger.Error(ctx, payload)
+				case api_errors.ErrorSeverity_ERROR_SEVERITY_CRITICAL:
+					logger.Critical(ctx, payload)
+				case api_errors.ErrorSeverity_ERROR_SEVERITY_ALERT:
+					logger.Alert(ctx, payload)
+				case api_errors.ErrorSeverity_ERROR_SEVERITY_EMERGENCY:
+					logger.Emergency(ctx, payload)
 				}
 			}
 			return resp, err

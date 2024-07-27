@@ -1,4 +1,4 @@
-package interceptor
+package advice
 
 import (
 	"net/http"
@@ -144,7 +144,7 @@ func Test_preconditionParamsBuilder_build(t *testing.T) {
 	now := time.Now()
 
 	type fields struct {
-		raw PreconditionParams
+		raw preconditionParams
 	}
 	type args struct {
 		requireMasterVersion bool
@@ -153,13 +153,13 @@ func Test_preconditionParamsBuilder_build(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    PreconditionParams
+		want    preconditionParams
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
 			name: "全てのフィールドが設定されている => 構築に成功する",
 			fields: fields{
-				raw: PreconditionParams{
+				raw: preconditionParams{
 					RequestedTime:  now,
 					Now:            now,
 					RequestID:      faker.UUIDv5("RequestID"),
@@ -169,7 +169,7 @@ func Test_preconditionParamsBuilder_build(t *testing.T) {
 			args: args{
 				requireMasterVersion: true,
 			},
-			want: PreconditionParams{
+			want: preconditionParams{
 				RequestID:      faker.UUIDv5("RequestID"),
 				IdempotencyKey: faker.UUIDv5("IdempotencyKey"),
 				RequestedTime:  now,
@@ -180,7 +180,7 @@ func Test_preconditionParamsBuilder_build(t *testing.T) {
 		{
 			name: "RequestedTime が未設定 => エラー",
 			fields: fields{
-				raw: PreconditionParams{
+				raw: preconditionParams{
 					RequestID:      faker.UUIDv5("RequestID"),
 					IdempotencyKey: faker.UUIDv5("IdempotencyKey"),
 					Now:            now,
@@ -189,13 +189,13 @@ func Test_preconditionParamsBuilder_build(t *testing.T) {
 			args: args{
 				requireMasterVersion: true,
 			},
-			want:    PreconditionParams{},
+			want:    preconditionParams{},
 			wantErr: assert.Error,
 		},
 		{
 			name: "Now が未設定 => エラー",
 			fields: fields{
-				raw: PreconditionParams{
+				raw: preconditionParams{
 					RequestID:      faker.UUIDv5("RequestID"),
 					IdempotencyKey: faker.UUIDv5("IdempotencyKey"),
 					RequestedTime:  now,
@@ -204,13 +204,13 @@ func Test_preconditionParamsBuilder_build(t *testing.T) {
 			args: args{
 				requireMasterVersion: true,
 			},
-			want:    PreconditionParams{},
+			want:    preconditionParams{},
 			wantErr: assert.Error,
 		},
 		{
 			name: "RequestID が未設定 => エラー",
 			fields: fields{
-				raw: PreconditionParams{
+				raw: preconditionParams{
 					IdempotencyKey: faker.UUIDv5("IdempotencyKey"),
 					RequestedTime:  now,
 					Now:            now,
@@ -219,13 +219,13 @@ func Test_preconditionParamsBuilder_build(t *testing.T) {
 			args: args{
 				requireMasterVersion: true,
 			},
-			want:    PreconditionParams{},
+			want:    preconditionParams{},
 			wantErr: assert.Error,
 		},
 		{
 			name: "IdempotencyKey が未設定 => エラー",
 			fields: fields{
-				raw: PreconditionParams{
+				raw: preconditionParams{
 					RequestID:     faker.UUIDv5("RequestID"),
 					RequestedTime: now,
 					Now:           now,
@@ -234,7 +234,7 @@ func Test_preconditionParamsBuilder_build(t *testing.T) {
 			args: args{
 				requireMasterVersion: true,
 			},
-			want:    PreconditionParams{},
+			want:    preconditionParams{},
 			wantErr: assert.Error,
 		},
 	}

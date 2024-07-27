@@ -43,3 +43,7 @@ func (u *User) Activate() error {
 	u.Status = UserStatusActive
 	return nil
 }
+
+func (u User) IsUnavailable() bool {
+	return u.Status == UserStatusDeactivated
+}

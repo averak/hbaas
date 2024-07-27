@@ -1,19 +1,19 @@
-package interceptor
+package advice
 
 import (
 	"context"
 	"errors"
 	"time"
 
-	"connectrpc.com/connect"
+	"github.com/averak/hbaas/app/infrastructure/connect/interceptor"
+
 	"github.com/averak/hbaas/app/core/config"
-	"github.com/averak/hbaas/app/core/ctxval"
 	"github.com/averak/hbaas/app/core/transaction_context"
 	"github.com/averak/hbaas/app/infrastructure/connect/mdval"
 	"github.com/google/uuid"
 )
 
-type PreconditionParams struct {
+type preconditionParams struct {
 	RequestID      uuid.UUID
 	IdempotencyKey uuid.UUID
 	// リクエストを受け取った現実世界での時刻
@@ -22,41 +22,25 @@ type PreconditionParams struct {
 	Now time.Time
 }
 
-func (p PreconditionParams) TransactionContext() transaction_context.TransactionContext {
+func (p preconditionParams) TransactionContext() transaction_context.TransactionContext {
 	return transaction_context.NewTransactionContext(
 		p.IdempotencyKey,
 		p.Now,
 	)
 }
 
-func NewFixPreconditionParamsInterceptor() connect.UnaryInterceptorFunc {
-	return func(next connect.UnaryFunc) connect.UnaryFunc {
-		return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
-			if req.Spec().IsClient {
-				return next(ctx, req)
-			}
-
-			incomingMD := mdval.NewIncomingMD(req.Header())
-			builder := newPreconditionParamsBuilder()
-			builder.requestID(uuid.New())
-			fixIdempotencyKey(incomingMD, builder)
-			err := fixTimestamp(config.Get(), incomingMD, builder, time.Now())
-			if err != nil {
-				return nil, err
-			}
-
-			params, err := builder.build()
-			if err != nil {
-				return nil, err
-			}
-
-			AddLogHint(ctx, "requestID", params.RequestID)
-			AddLogHint(ctx, "transactionContext", params.TransactionContext())
-
-			ctx = ctxval.SetTransactionContext(ctx, params.TransactionContext())
-			return next(ctx, req)
-		}
+func fixPreconditionParams(ctx context.Context, incomingMD mdval.IncomingMD) (preconditionParams, error) {
+	builder := newPreconditionParamsBuilder()
+	builder.requestID(uuid.New())
+	fixIdempotencyKey(incomingMD, builder)
+	err := fixTimestamp(config.Get(), incomingMD, builder, time.Now())
+	if err != nil {
+		return preconditionParams{}, err
 	}
+
+	interceptor.AddLogHint(ctx, "requestID", builder.raw.RequestID)
+	interceptor.AddLogHint(ctx, "transactionContext", builder.raw.TransactionContext())
+	return builder.build()
 }
 
 func fixIdempotencyKey(incomingMD mdval.IncomingMD, builder *preconditionParamsBuilder) {
@@ -89,27 +73,27 @@ func fixTimestamp(conf *config.Config, incomingMD mdval.IncomingMD, builder *pre
 	return nil
 }
 
-// PreconditionParams の設定漏れがないか検証するために、ビルダーを定義しています。
+// preconditionParams の設定漏れがないか検証するために、ビルダーを定義しています。
 type preconditionParamsBuilder struct {
-	raw PreconditionParams
+	raw preconditionParams
 }
 
 func newPreconditionParamsBuilder() *preconditionParamsBuilder {
 	return &preconditionParamsBuilder{}
 }
 
-func (b preconditionParamsBuilder) build() (PreconditionParams, error) {
+func (b preconditionParamsBuilder) build() (preconditionParams, error) {
 	if b.raw.RequestID == uuid.Nil {
-		return PreconditionParams{}, errors.New("requestID is not set")
+		return preconditionParams{}, errors.New("requestID is not set")
 	}
 	if b.raw.IdempotencyKey == uuid.Nil {
-		return PreconditionParams{}, errors.New("idempotencyKey is not set")
+		return preconditionParams{}, errors.New("idempotencyKey is not set")
 	}
 	if b.raw.RequestedTime.IsZero() {
-		return PreconditionParams{}, errors.New("requestedTime is not set")
+		return preconditionParams{}, errors.New("requestedTime is not set")
 	}
 	if b.raw.Now.IsZero() {
-		return PreconditionParams{}, errors.New("now is not set")
+		return preconditionParams{}, errors.New("now is not set")
 	}
 	return b.raw, nil
 }
