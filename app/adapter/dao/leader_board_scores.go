@@ -26,9 +26,9 @@ type LeaderBoardScore struct {
 	LeaderBoardID string    `boil:"leader_board_id" json:"leader_board_id" toml:"leader_board_id" yaml:"leader_board_id"`
 	ScoreID       string    `boil:"score_id" json:"score_id" toml:"score_id" yaml:"score_id"`
 	Score         int       `boil:"score" json:"score" toml:"score" yaml:"score"`
+	Timestamp     time.Time `boil:"timestamp" json:"timestamp" toml:"timestamp" yaml:"timestamp"`
 	CreatedAt     time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	UpdatedAt     time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
-	Timestamp     time.Time `boil:"timestamp" json:"timestamp" toml:"timestamp" yaml:"timestamp"`
 
 	R *leaderBoardScoreR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L leaderBoardScoreL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -38,32 +38,32 @@ var LeaderBoardScoreColumns = struct {
 	LeaderBoardID string
 	ScoreID       string
 	Score         string
+	Timestamp     string
 	CreatedAt     string
 	UpdatedAt     string
-	Timestamp     string
 }{
 	LeaderBoardID: "leader_board_id",
 	ScoreID:       "score_id",
 	Score:         "score",
+	Timestamp:     "timestamp",
 	CreatedAt:     "created_at",
 	UpdatedAt:     "updated_at",
-	Timestamp:     "timestamp",
 }
 
 var LeaderBoardScoreTableColumns = struct {
 	LeaderBoardID string
 	ScoreID       string
 	Score         string
+	Timestamp     string
 	CreatedAt     string
 	UpdatedAt     string
-	Timestamp     string
 }{
 	LeaderBoardID: "leader_board_scores.leader_board_id",
 	ScoreID:       "leader_board_scores.score_id",
 	Score:         "leader_board_scores.score",
+	Timestamp:     "leader_board_scores.timestamp",
 	CreatedAt:     "leader_board_scores.created_at",
 	UpdatedAt:     "leader_board_scores.updated_at",
-	Timestamp:     "leader_board_scores.timestamp",
 }
 
 // Generated where
@@ -95,16 +95,16 @@ var LeaderBoardScoreWhere = struct {
 	LeaderBoardID whereHelperstring
 	ScoreID       whereHelperstring
 	Score         whereHelperint
+	Timestamp     whereHelpertime_Time
 	CreatedAt     whereHelpertime_Time
 	UpdatedAt     whereHelpertime_Time
-	Timestamp     whereHelpertime_Time
 }{
 	LeaderBoardID: whereHelperstring{field: "\"leader_board_scores\".\"leader_board_id\""},
 	ScoreID:       whereHelperstring{field: "\"leader_board_scores\".\"score_id\""},
 	Score:         whereHelperint{field: "\"leader_board_scores\".\"score\""},
+	Timestamp:     whereHelpertime_Time{field: "\"leader_board_scores\".\"timestamp\""},
 	CreatedAt:     whereHelpertime_Time{field: "\"leader_board_scores\".\"created_at\""},
 	UpdatedAt:     whereHelpertime_Time{field: "\"leader_board_scores\".\"updated_at\""},
-	Timestamp:     whereHelpertime_Time{field: "\"leader_board_scores\".\"timestamp\""},
 }
 
 // LeaderBoardScoreRels is where relationship names are stored.
@@ -135,8 +135,8 @@ func (r *leaderBoardScoreR) GetLeaderBoard() *LeaderBoard {
 type leaderBoardScoreL struct{}
 
 var (
-	leaderBoardScoreAllColumns            = []string{"leader_board_id", "score_id", "score", "created_at", "updated_at", "timestamp"}
-	leaderBoardScoreColumnsWithoutDefault = []string{"leader_board_id", "score_id", "score", "created_at", "updated_at", "timestamp"}
+	leaderBoardScoreAllColumns            = []string{"leader_board_id", "score_id", "score", "timestamp", "created_at", "updated_at"}
+	leaderBoardScoreColumnsWithoutDefault = []string{"leader_board_id", "score_id", "score", "timestamp", "created_at", "updated_at"}
 	leaderBoardScoreColumnsWithDefault    = []string{}
 	leaderBoardScorePrimaryKeyColumns     = []string{"leader_board_id", "score_id"}
 	leaderBoardScoreGeneratedColumns      = []string{}
