@@ -18,6 +18,7 @@ import (
 	"github.com/averak/hbaas/testutils"
 	"github.com/averak/hbaas/testutils/bdd"
 	"github.com/averak/hbaas/testutils/fixture/builder/system_builder"
+	"github.com/averak/hbaas/testutils/fixture/builder/user_builder"
 	"github.com/averak/hbaas/testutils/fixture/setupper/systemup"
 	"github.com/averak/hbaas/testutils/testconnect"
 	"github.com/google/go-cmp/cmp"
@@ -50,10 +51,10 @@ func Test_handler_GetV1(t *testing.T) {
 					GlobalKVSBucket(
 						system_builder.NewGlobalKVSBucketBuilder().
 							Entries(
-								system_builder.NewKVSEntryBuilder(t).Key("group1:key1").Value([]byte("v1")).Build(),
-								system_builder.NewKVSEntryBuilder(t).Key("group1:key2").Value([]byte("v2")).Build(),
-								system_builder.NewKVSEntryBuilder(t).Key("group2:key1").Value([]byte("v3")).Build(),
-								system_builder.NewKVSEntryBuilder(t).Key("group2:key2").Value([]byte("v4")).Build(),
+								user_builder.NewKVSEntryBuilder(t).Key("group1:key1").Value([]byte("v1")).Build(),
+								user_builder.NewKVSEntryBuilder(t).Key("group1:key2").Value([]byte("v2")).Build(),
+								user_builder.NewKVSEntryBuilder(t).Key("group2:key1").Value([]byte("v3")).Build(),
+								user_builder.NewKVSEntryBuilder(t).Key("group2:key2").Value([]byte("v4")).Build(),
 							).
 							Build(),
 					).
@@ -221,9 +222,9 @@ func Test_handler_SetV1(t *testing.T) {
 					GlobalKVSBucket(
 						system_builder.NewGlobalKVSBucketBuilder().
 							Entries(
-								system_builder.NewKVSEntryBuilder(t).Key("key1").Value([]byte("v1")).Build(),
-								system_builder.NewKVSEntryBuilder(t).Key("key2").Value([]byte("v2")).Build(),
-								system_builder.NewKVSEntryBuilder(t).Key("key3").Value([]byte("v3")).Build(),
+								user_builder.NewKVSEntryBuilder(t).Key("key1").Value([]byte("v1")).Build(),
+								user_builder.NewKVSEntryBuilder(t).Key("key2").Value([]byte("v2")).Build(),
+								user_builder.NewKVSEntryBuilder(t).Key("key3").Value([]byte("v3")).Build(),
 							).
 							Build(),
 					).

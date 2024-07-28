@@ -99,6 +99,8 @@ func (r Request[T]) TransactionContext() transaction_context.TransactionContext 
 	return r.tctx
 }
 
+// Principal は、認証されたユーザーを返します。
+// 認証必須の API は必ず true を返すので、わざわざ戻り値をチェックする必要はありません。
 func (r Request[T]) Principal() (model.User, bool) {
 	if r.principal == nil {
 		return model.User{}, false
