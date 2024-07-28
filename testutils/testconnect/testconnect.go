@@ -9,10 +9,13 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/averak/hbaas/app/core/config"
 	"github.com/averak/hbaas/app/core/transaction_context"
 	"github.com/averak/hbaas/app/infrastructure/connect/error_response"
 	"github.com/averak/hbaas/app/infrastructure/connect/mdval"
+	"github.com/averak/hbaas/app/infrastructure/session"
 	"github.com/averak/hbaas/protobuf/api/api_errors"
+	"github.com/averak/hbaas/testutils/faker"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -55,6 +58,19 @@ func WithIdempotencyKey(idempotencyKey uuid.UUID) Option {
 func WithSpoofingUserID(userID uuid.UUID) Option {
 	return func(header http.Header) {
 		header.Add(string(mdval.DebugSpoofingUserIDKey), userID.String())
+	}
+}
+
+func WithSessionToken(t *testing.T, userID uuid.UUID) Option {
+	t.Helper()
+
+	return func(header http.Header) {
+		sess := session.NewSession(userID, time.Now(), faker.MaxTime())
+		token, err := session.EncodeSessionToken(sess, []byte(config.Get().GetSession().GetSecretKey()))
+		if err != nil {
+			t.Fatal(err)
+		}
+		header.Add(string(mdval.SessionTokenKey), token)
 	}
 }
 

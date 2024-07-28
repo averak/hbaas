@@ -118,14 +118,20 @@ var UserWhere = struct {
 
 // UserRels is where relationship names are stored.
 var UserRels = struct {
+	PrivateKVSEtag     string
 	UserAuthentication string
+	PrivateKVSEntries  string
 }{
+	PrivateKVSEtag:     "PrivateKVSEtag",
 	UserAuthentication: "UserAuthentication",
+	PrivateKVSEntries:  "PrivateKVSEntries",
 }
 
 // userR is where relationships are stored.
 type userR struct {
-	UserAuthentication *UserAuthentication `boil:"UserAuthentication" json:"UserAuthentication" toml:"UserAuthentication" yaml:"UserAuthentication"`
+	PrivateKVSEtag     *PrivateKVSEtag      `boil:"PrivateKVSEtag" json:"PrivateKVSEtag" toml:"PrivateKVSEtag" yaml:"PrivateKVSEtag"`
+	UserAuthentication *UserAuthentication  `boil:"UserAuthentication" json:"UserAuthentication" toml:"UserAuthentication" yaml:"UserAuthentication"`
+	PrivateKVSEntries  PrivateKVSEntrySlice `boil:"PrivateKVSEntries" json:"PrivateKVSEntries" toml:"PrivateKVSEntries" yaml:"PrivateKVSEntries"`
 }
 
 // NewStruct creates a new relationship struct
@@ -133,11 +139,25 @@ func (*userR) NewStruct() *userR {
 	return &userR{}
 }
 
+func (r *userR) GetPrivateKVSEtag() *PrivateKVSEtag {
+	if r == nil {
+		return nil
+	}
+	return r.PrivateKVSEtag
+}
+
 func (r *userR) GetUserAuthentication() *UserAuthentication {
 	if r == nil {
 		return nil
 	}
 	return r.UserAuthentication
+}
+
+func (r *userR) GetPrivateKVSEntries() PrivateKVSEntrySlice {
+	if r == nil {
+		return nil
+	}
+	return r.PrivateKVSEntries
 }
 
 // userL is where Load methods for each relationship are stored.
@@ -456,6 +476,17 @@ func (q userQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (bool,
 	return count > 0, nil
 }
 
+// PrivateKVSEtag pointed to by the foreign key.
+func (o *User) PrivateKVSEtag(mods ...qm.QueryMod) privateKVSEtagQuery {
+	queryMods := []qm.QueryMod{
+		qm.Where("\"user_id\" = ?", o.ID),
+	}
+
+	queryMods = append(queryMods, mods...)
+
+	return PrivateKVSEtags(queryMods...)
+}
+
 // UserAuthentication pointed to by the foreign key.
 func (o *User) UserAuthentication(mods ...qm.QueryMod) userAuthenticationQuery {
 	queryMods := []qm.QueryMod{
@@ -465,6 +496,137 @@ func (o *User) UserAuthentication(mods ...qm.QueryMod) userAuthenticationQuery {
 	queryMods = append(queryMods, mods...)
 
 	return UserAuthentications(queryMods...)
+}
+
+// PrivateKVSEntries retrieves all the private_kvs_entry's PrivateKVSEntries with an executor.
+func (o *User) PrivateKVSEntries(mods ...qm.QueryMod) privateKVSEntryQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"private_kvs_entries\".\"user_id\"=?", o.ID),
+	)
+
+	return PrivateKVSEntries(queryMods...)
+}
+
+// LoadPrivateKVSEtag allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-1 relationship.
+func (userL) LoadPrivateKVSEtag(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+	var slice []*User
+	var object *User
+
+	if singular {
+		var ok bool
+		object, ok = maybeUser.(*User)
+		if !ok {
+			object = new(User)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUser))
+			}
+		}
+	} else {
+		s, ok := maybeUser.(*[]*User)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUser))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &userR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userR{}
+			}
+
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`private_kvs_etags`),
+		qm.WhereIn(`private_kvs_etags.user_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load PrivateKVSEtag")
+	}
+
+	var resultSlice []*PrivateKVSEtag
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice PrivateKVSEtag")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results of eager load for private_kvs_etags")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for private_kvs_etags")
+	}
+
+	if len(privateKVSEtagAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+
+	if len(resultSlice) == 0 {
+		return nil
+	}
+
+	if singular {
+		foreign := resultSlice[0]
+		object.R.PrivateKVSEtag = foreign
+		if foreign.R == nil {
+			foreign.R = &privateKVSEtagR{}
+		}
+		foreign.R.User = object
+	}
+
+	for _, local := range slice {
+		for _, foreign := range resultSlice {
+			if local.ID == foreign.UserID {
+				local.R.PrivateKVSEtag = foreign
+				if foreign.R == nil {
+					foreign.R = &privateKVSEtagR{}
+				}
+				foreign.R.User = local
+				break
+			}
+		}
+	}
+
+	return nil
 }
 
 // LoadUserAuthentication allows an eager lookup of values, cached into the
@@ -584,6 +746,169 @@ func (userL) LoadUserAuthentication(ctx context.Context, e boil.ContextExecutor,
 	return nil
 }
 
+// LoadPrivateKVSEntries allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (userL) LoadPrivateKVSEntries(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+	var slice []*User
+	var object *User
+
+	if singular {
+		var ok bool
+		object, ok = maybeUser.(*User)
+		if !ok {
+			object = new(User)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUser))
+			}
+		}
+	} else {
+		s, ok := maybeUser.(*[]*User)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUser))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &userR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`private_kvs_entries`),
+		qm.WhereIn(`private_kvs_entries.user_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load private_kvs_entries")
+	}
+
+	var resultSlice []*PrivateKVSEntry
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice private_kvs_entries")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on private_kvs_entries")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for private_kvs_entries")
+	}
+
+	if len(privateKVSEntryAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.PrivateKVSEntries = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &privateKVSEntryR{}
+			}
+			foreign.R.User = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.UserID {
+				local.R.PrivateKVSEntries = append(local.R.PrivateKVSEntries, foreign)
+				if foreign.R == nil {
+					foreign.R = &privateKVSEntryR{}
+				}
+				foreign.R.User = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// SetPrivateKVSEtag of the user to the related item.
+// Sets o.R.PrivateKVSEtag to related.
+// Adds o to related.R.User.
+func (o *User) SetPrivateKVSEtag(ctx context.Context, exec boil.ContextExecutor, insert bool, related *PrivateKVSEtag) error {
+	var err error
+
+	if insert {
+		related.UserID = o.ID
+
+		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
+			return errors.Wrap(err, "failed to insert into foreign table")
+		}
+	} else {
+		updateQuery := fmt.Sprintf(
+			"UPDATE \"private_kvs_etags\" SET %s WHERE %s",
+			strmangle.SetParamNames("\"", "\"", 1, []string{"user_id"}),
+			strmangle.WhereClause("\"", "\"", 2, privateKVSEtagPrimaryKeyColumns),
+		)
+		values := []interface{}{o.ID, related.UserID}
+
+		if boil.IsDebug(ctx) {
+			writer := boil.DebugWriterFrom(ctx)
+			fmt.Fprintln(writer, updateQuery)
+			fmt.Fprintln(writer, values)
+		}
+		if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+			return errors.Wrap(err, "failed to update foreign table")
+		}
+
+		related.UserID = o.ID
+	}
+
+	if o.R == nil {
+		o.R = &userR{
+			PrivateKVSEtag: related,
+		}
+	} else {
+		o.R.PrivateKVSEtag = related
+	}
+
+	if related.R == nil {
+		related.R = &privateKVSEtagR{
+			User: o,
+		}
+	} else {
+		related.R.User = o
+	}
+	return nil
+}
+
 // SetUserAuthentication of the user to the related item.
 // Sets o.R.UserAuthentication to related.
 // Adds o to related.R.User.
@@ -630,6 +955,59 @@ func (o *User) SetUserAuthentication(ctx context.Context, exec boil.ContextExecu
 		}
 	} else {
 		related.R.User = o
+	}
+	return nil
+}
+
+// AddPrivateKVSEntries adds the given related objects to the existing relationships
+// of the user, optionally inserting them as new records.
+// Appends related to o.R.PrivateKVSEntries.
+// Sets related.R.User appropriately.
+func (o *User) AddPrivateKVSEntries(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*PrivateKVSEntry) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.UserID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"private_kvs_entries\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"user_id"}),
+				strmangle.WhereClause("\"", "\"", 2, privateKVSEntryPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.UserID, rel.Key}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.UserID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &userR{
+			PrivateKVSEntries: related,
+		}
+	} else {
+		o.R.PrivateKVSEntries = append(o.R.PrivateKVSEntries, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &privateKVSEntryR{
+				User: o,
+			}
+		} else {
+			rel.R.User = o
+		}
 	}
 	return nil
 }
