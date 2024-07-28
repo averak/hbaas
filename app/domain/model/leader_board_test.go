@@ -59,9 +59,7 @@ func TestLeaderBoard_SubmitScore(t *testing.T) {
 		Scores []LeaderBoardScore
 	}
 	type args struct {
-		entityID string
-		score    int
-		now      time.Time
+		score LeaderBoardScore
 	}
 	tests := []struct {
 		name   string
@@ -81,9 +79,11 @@ func TestLeaderBoard_SubmitScore(t *testing.T) {
 				},
 			},
 			args: args{
-				entityID: "1",
-				score:    2,
-				now:      now,
+				score: LeaderBoardScore{
+					ScoreID:   "1",
+					Score:     2,
+					Timestamp: now,
+				},
 			},
 			want: LeaderBoard{
 				Scores: []LeaderBoardScore{
@@ -107,9 +107,11 @@ func TestLeaderBoard_SubmitScore(t *testing.T) {
 				},
 			},
 			args: args{
-				entityID: "2",
-				score:    2,
-				now:      now,
+				score: LeaderBoardScore{
+					ScoreID:   "2",
+					Score:     2,
+					Timestamp: now,
+				},
 			},
 			want: LeaderBoard{
 				Scores: []LeaderBoardScore{
@@ -132,7 +134,7 @@ func TestLeaderBoard_SubmitScore(t *testing.T) {
 			l := LeaderBoard{
 				Scores: tt.fields.Scores,
 			}
-			l.SubmitScore(tt.args.entityID, tt.args.score, tt.args.now)
+			l.SubmitScore(tt.args.score)
 			assert.Equal(t, tt.want, l)
 		})
 	}
@@ -182,6 +184,54 @@ func TestLeaderBoard_updateRanking(t *testing.T) {
 			}
 			l.updateRanking()
 			assert.Equal(t, tt.want, l)
+		})
+	}
+}
+
+func TestLeaderBoardScore_eq(t *testing.T) {
+	type fields struct {
+		ScoreID string
+	}
+	type args struct {
+		other LeaderBoardScore
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{
+			name: "スコアIDが一致する => true",
+			fields: fields{
+				ScoreID: "1",
+			},
+			args: args{
+				other: LeaderBoardScore{
+					ScoreID: "1",
+				},
+			},
+			want: true,
+		},
+		{
+			name: "スコアIDが一致しない => false",
+			fields: fields{
+				ScoreID: "1",
+			},
+			args: args{
+				other: LeaderBoardScore{
+					ScoreID: "2",
+				},
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := LeaderBoardScore{
+				ScoreID: tt.fields.ScoreID,
+			}
+			assert.Equal(t, tt.want, s.eq(tt.args.other))
 		})
 	}
 }

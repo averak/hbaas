@@ -43,7 +43,6 @@ func Test_handler_GetV1(t *testing.T) {
 	type then = func(*testing.T, *connect.Response[api.LeaderBoardServiceGetV1Response], error)
 	tests := []bdd.Testcase[given, when, then]{
 		{
-			Name: "リーダーボードが存在する状態で",
 			Given: given{
 				systemData: system_builder.New().
 					LeaderBoard(
@@ -88,7 +87,7 @@ func Test_handler_GetV1(t *testing.T) {
 					},
 				},
 				{
-					Name: "リーダーボードが存在する => 空のスコアを取得できる",
+					Name: "リーダーボードが存在しない => 空のスコアを取得できる",
 					When: when{
 						req: &api.LeaderBoardServiceGetV1Request{
 							LeaderBoardId: faker.UUIDv5("l2").String(),
@@ -118,6 +117,121 @@ func Test_handler_GetV1(t *testing.T) {
 				apiconnect.NewLeaderBoardServiceClient(http.DefaultClient, server.URL).GetV1,
 				when.req,
 				testconnect.WithSpoofingUserID(uuid.New()),
+			)
+			then(t, got, err)
+		})
+	}
+}
+
+func Test_handler_SubmitScoreV1(t *testing.T) {
+	mux, err := registry.InitializeAPIServerMux(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := httptest.NewServer(mux)
+	defer server.Close()
+
+	now := time.Now().Truncate(time.Millisecond)
+
+	type given struct {
+		systemData system_builder.Data
+	}
+	type when struct {
+		req *api.LeaderBoardServiceSubmitScoreV1Request
+	}
+	type then = func(*testing.T, *connect.Response[api.LeaderBoardServiceSubmitScoreV1Response], error)
+	tests := []bdd.Testcase[given, when, then]{
+		{
+			Given: given{
+				systemData: system_builder.New().
+					LeaderBoard(
+						system_builder.NewLeaderBoardBuilder(faker.UUIDv5("l1").String()).
+							Scores(
+								system_builder.NewLeaderBoardScoreBuilder(faker.UUIDv5("s1").String()).Score(1).Timestamp(now.Add(-1*time.Hour)).Build(),
+								system_builder.NewLeaderBoardScoreBuilder(faker.UUIDv5("s2").String()).Score(2).Timestamp(now).Build(),
+							).
+							Build(),
+					).
+					Build(),
+			},
+			Behaviors: []bdd.Behavior[when, then]{
+				{
+					Name: "リーダーボードが存在する => スコアを提出できる",
+					When: when{
+						req: &api.LeaderBoardServiceSubmitScoreV1Request{
+							LeaderBoardId: faker.UUIDv5("l1").String(),
+							ScoreId:       faker.UUIDv5("s3").String(),
+							Score:         3,
+						},
+					},
+					Then: func(t *testing.T, got *connect.Response[api.LeaderBoardServiceSubmitScoreV1Response], err error) {
+						require.NoError(t, err)
+
+						want := &api.LeaderBoardServiceSubmitScoreV1Response{
+							LeaderBoard: &resource.LeaderBoard{
+								LeaderBoardId: faker.UUIDv5("l1").String(),
+								Scores: []*resource.LeaderBoardScore{
+									{
+										ScoreId:   faker.UUIDv5("s3").String(),
+										Score:     3,
+										Timestamp: timestamppb.New(now),
+									},
+									{
+										ScoreId:   faker.UUIDv5("s2").String(),
+										Score:     2,
+										Timestamp: timestamppb.New(now),
+									},
+									{
+										ScoreId:   faker.UUIDv5("s1").String(),
+										Score:     1,
+										Timestamp: timestamppb.New(now.Add(-1 * time.Hour)),
+									},
+								},
+							},
+						}
+						assert.EqualExportedValues(t, want, got.Msg)
+					},
+				},
+				{
+					Name: "リーダーボードが存在しない => リーダーボードを作成できる",
+					When: when{
+						req: &api.LeaderBoardServiceSubmitScoreV1Request{
+							LeaderBoardId: faker.UUIDv5("l2").String(),
+							ScoreId:       faker.UUIDv5("s1").String(),
+							Score:         1,
+						},
+					},
+					Then: func(t *testing.T, got *connect.Response[api.LeaderBoardServiceSubmitScoreV1Response], err error) {
+						require.NoError(t, err)
+
+						want := &api.LeaderBoardServiceSubmitScoreV1Response{
+							LeaderBoard: &resource.LeaderBoard{
+								LeaderBoardId: faker.UUIDv5("l2").String(),
+								Scores: []*resource.LeaderBoardScore{
+									{
+										ScoreId:   faker.UUIDv5("s1").String(),
+										Score:     1,
+										Timestamp: timestamppb.New(now),
+									},
+								},
+							},
+						}
+						assert.EqualExportedValues(t, want, got.Msg)
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		tt.Run(t, func(t *testing.T, given given, when when, then then) {
+			systemup.Setup(t, context.Background(), given.systemData)
+			defer testutils.Teardown(t)
+
+			got, err := testconnect.MethodInvoke(
+				apiconnect.NewLeaderBoardServiceClient(http.DefaultClient, server.URL).SubmitScoreV1,
+				when.req,
+				testconnect.WithSpoofingUserID(uuid.New()),
+				testconnect.WithAdjustedTime(now),
 			)
 			then(t, got, err)
 		})
