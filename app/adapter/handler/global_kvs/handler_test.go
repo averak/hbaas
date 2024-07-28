@@ -11,7 +11,8 @@ import (
 	"github.com/averak/hbaas/app/core/numunit"
 	"github.com/averak/hbaas/app/domain/repository/transaction"
 	"github.com/averak/hbaas/app/registry"
-	api "github.com/averak/hbaas/protobuf/api"
+	"github.com/averak/hbaas/protobuf/api"
+	"github.com/averak/hbaas/protobuf/api/api_errors"
 	"github.com/averak/hbaas/protobuf/api/apiconnect"
 	"github.com/averak/hbaas/protobuf/resource"
 	"github.com/averak/hbaas/testutils"
@@ -21,6 +22,7 @@ import (
 	"github.com/averak/hbaas/testutils/testconnect"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -187,6 +189,7 @@ func Test_handler_GetV1(t *testing.T) {
 			got, err := testconnect.MethodInvoke(
 				apiconnect.NewGlobalKVSServiceClient(http.DefaultClient, server.URL).GetV1,
 				when.req,
+				testconnect.WithSpoofingUserID(uuid.New()),
 			)
 			then(t, got, err)
 		})
@@ -317,8 +320,7 @@ func Test_handler_SetV1(t *testing.T) {
 						},
 					},
 					Then: func(t *testing.T, got *connect.Response[api.GlobalKVSServiceSetV1Response], dtos []*dao.GlobalKVSEntry, err error) {
-						// TODO: エラーコードを検証する
-						require.Error(t, err)
+						testconnect.AssertErrorCode(t, api_errors.ErrorCode_METHOD_ILLEGAL_ARGUMENT, err)
 					},
 				},
 			},
@@ -332,6 +334,7 @@ func Test_handler_SetV1(t *testing.T) {
 			got, err := testconnect.MethodInvoke(
 				apiconnect.NewGlobalKVSServiceClient(http.DefaultClient, server.URL).SetV1,
 				when.req,
+				testconnect.WithSpoofingUserID(uuid.New()),
 			)
 
 			var dtos []*dao.GlobalKVSEntry

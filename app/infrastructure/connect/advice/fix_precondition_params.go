@@ -5,10 +5,9 @@ import (
 	"errors"
 	"time"
 
-	"github.com/averak/hbaas/app/infrastructure/connect/interceptor"
-
 	"github.com/averak/hbaas/app/core/config"
 	"github.com/averak/hbaas/app/core/transaction_context"
+	"github.com/averak/hbaas/app/infrastructure/connect/interceptor"
 	"github.com/averak/hbaas/app/infrastructure/connect/mdval"
 	"github.com/google/uuid"
 )

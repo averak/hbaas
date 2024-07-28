@@ -27,8 +27,12 @@ func New[T CodeType](code T, severity api_errors.ErrorSeverity, message string) 
 	for i := range values.Len() {
 		v := values.Get(i)
 		if v.Number() == code.Number() {
-			grpcCode = proto.GetExtension(v.Options(), api_errors.E_GrpcCode).(rpccode.Code)
-			handlingType = proto.GetExtension(v.Options(), api_errors.E_ErrorHandlingType).(api_errors.ErrorHandlingType)
+			if c, ok := proto.GetExtension(v.Options(), api_errors.E_GrpcCode).(rpccode.Code); ok {
+				grpcCode = c
+			}
+			if h, ok := proto.GetExtension(v.Options(), api_errors.E_ErrorHandlingType).(api_errors.ErrorHandlingType); ok {
+				handlingType = h
+			}
 			break
 		}
 	}
