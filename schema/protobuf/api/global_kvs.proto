@@ -1,6 +1,7 @@
 syntax = "proto3";
 package api;
 
+import "custom_option/custom_option.proto";
 import "resource/kvs.proto";
 
 // グローバル KVS 機能とは、任意のデータを格納できる汎用的な Key-Value ストアです。
@@ -12,7 +13,17 @@ service GlobalKVSService {
 
   // KVS にエントリを登録します。
   // エントリの作成、更新、削除を行うことが可能で、value が空のエントリは削除されます。
-  rpc SetV1(GlobalKVSServiceSetV1Request) returns (GlobalKVSServiceSetV1Response);
+  rpc SetV1(GlobalKVSServiceSetV1Request) returns (GlobalKVSServiceSetV1Response) {
+    option (custom_option.method_option) = {
+      method_error_definitions: [
+        {
+          code: METHOD_ILLEGAL_ARGUMENT
+          severity: ERROR_SEVERITY_WARNING
+          message: "The value bytes must be less than or equal to 1KiB."
+        }
+      ]
+    };
+  }
 }
 
 message GlobalKVSServiceGetV1Request {

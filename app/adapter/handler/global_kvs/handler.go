@@ -3,9 +3,9 @@ package global_kvs
 import (
 	"context"
 
-	"connectrpc.com/connect"
 	"github.com/averak/hbaas/app/adapter/pbconv"
-	"github.com/averak/hbaas/app/core/ctxval"
+	"github.com/averak/hbaas/app/domain/model"
+	"github.com/averak/hbaas/app/infrastructure/connect/advice"
 	"github.com/averak/hbaas/app/usecase/global_kvs_usecase"
 	"github.com/averak/hbaas/protobuf/api"
 	"github.com/averak/hbaas/protobuf/api/apiconnect"
@@ -15,30 +15,32 @@ type handler struct {
 	uc *global_kvs_usecase.Usecase
 }
 
-func NewHandler(uc *global_kvs_usecase.Usecase) apiconnect.GlobalKVSServiceHandler {
-	return &handler{uc: uc}
+func NewHandler(uc *global_kvs_usecase.Usecase, advice advice.Advice) apiconnect.GlobalKVSServiceHandler {
+	return api.NewGlobalKVSServiceHandler(&handler{uc: uc}, advice)
 }
 
-func (h handler) GetV1(ctx context.Context, c *connect.Request[api.GlobalKVSServiceGetV1Request]) (*connect.Response[api.GlobalKVSServiceGetV1Response], error) {
-	tctx, _ := ctxval.GetTransactionContext(ctx)
-	result, err := h.uc.Get(ctx, tctx, pbconv.FromKVSCriteriaPb(c.Msg.GetCriteria()))
+func (h handler) GetV1(ctx context.Context, req *advice.Request[*api.GlobalKVSServiceGetV1Request]) (*api.GlobalKVSServiceGetV1Response, error) {
+	result, err := h.uc.Get(ctx, req.TransactionContext(), pbconv.FromKVSCriteriaPb(req.Msg().GetCriteria()))
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&api.GlobalKVSServiceGetV1Response{
+	return &api.GlobalKVSServiceGetV1Response{
 		Entries: pbconv.ToKVSEntryPbs(result.Raw()),
-	}), nil
+	}, nil
 }
 
-func (h handler) SetV1(ctx context.Context, c *connect.Request[api.GlobalKVSServiceSetV1Request]) (*connect.Response[api.GlobalKVSServiceSetV1Response], error) {
-	tctx, _ := ctxval.GetTransactionContext(ctx)
-	entries, err := pbconv.FromKVSEntryPbs(c.Msg.GetEntries())
+func (h handler) SetV1(ctx context.Context, req *advice.Request[*api.GlobalKVSServiceSetV1Request]) (*api.GlobalKVSServiceSetV1Response, error) {
+	entries, err := pbconv.FromKVSEntryPbs(req.Msg().GetEntries())
 	if err != nil {
 		return nil, err
 	}
-	err = h.uc.Set(ctx, tctx, entries)
+	err = h.uc.Set(ctx, req.TransactionContext(), entries)
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&api.GlobalKVSServiceSetV1Response{}), nil
+	return &api.GlobalKVSServiceSetV1Response{}, nil
+}
+
+func (h handler) SetV1Errors(errs *api.GlobalKVSServiceSetV1Errors) {
+	errs.Map(model.ErrKVSEntryValueTooLarge, errs.ILLEGAL_ARGUMENT)
 }

@@ -20,8 +20,8 @@ const (
 	DebugAdjustedTimeKey   incomingHeaderKey = "x-debug-adjustment-timestamp"
 	DebugSpoofingUserIDKey incomingHeaderKey = "x-debug-spoofing-uid"
 
-	RespondTimestampKey outgoingTrailerKey = "x-respond-timestamp"
-	ServerVersionKey    outgoingTrailerKey = "x-server-version"
+	RespondTimestampKey outgoingHeaderKey = "x-respond-timestamp"
+	ServerVersionKey    outgoingHeaderKey = "x-server-version"
 )
 
 type IncomingMD struct {
@@ -51,6 +51,12 @@ func (i IncomingMD) ToMap() map[incomingHeaderKey]string {
 		}
 	}
 	return res
+}
+
+func SetOutgoingHeader(response connect.AnyResponse, md OutgoingHeaderMD) {
+	for key, value := range md {
+		response.Header().Set(string(key), value)
+	}
 }
 
 func SetOutgoingTrailer(response connect.AnyResponse, md OutgoingTrailerMD) {

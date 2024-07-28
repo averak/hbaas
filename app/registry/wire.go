@@ -11,6 +11,7 @@ import (
 	"github.com/averak/hbaas/app/adapter/repoimpl"
 	"github.com/averak/hbaas/app/adapter/usecaseimpl"
 	"github.com/averak/hbaas/app/core/config"
+	"github.com/averak/hbaas/app/infrastructure/connect/advice"
 	"github.com/averak/hbaas/app/infrastructure/db"
 	"github.com/averak/hbaas/app/infrastructure/google_cloud"
 	"github.com/averak/hbaas/app/usecase"
@@ -23,6 +24,7 @@ var SuperSet = wire.NewSet(
 	usecaseimpl.SuperSet,
 	usecase.SuperSet,
 	db.NewConnection,
+	advice.NewAdvice,
 	newFirebaseClient,
 )
 

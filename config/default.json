@@ -9,7 +9,9 @@
     }
   },
   "logging": {
-    "severity": "SEVERITY_DEBUG"
+    "severity": "SEVERITY_DEBUG",
+    "omit_request_body": false,
+    "omit_response_body": false
   },
   "postgres": {
     "host": "localhost",
