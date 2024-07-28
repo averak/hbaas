@@ -148,7 +148,7 @@ func TestKVSBucket_Set(t *testing.T) {
 			m := KVSBucket{
 				raw: tt.fields.raw,
 			}
-			m.Set(tt.args.entries...)
+			m.Set(tt.args.entries)
 			if diff := cmp.Diff(tt.want, m, cmp.AllowUnexported(KVSBucket{})); diff != "" {
 				t.Errorf("(-want, +got)\n%s", diff)
 			}

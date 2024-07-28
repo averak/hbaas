@@ -4,12 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/averak/hbaas/app/core/transaction_context"
 	"github.com/averak/hbaas/app/domain/model"
 	"github.com/averak/hbaas/app/domain/repository/transaction"
 )
 
-func (u Usecase) Get(ctx context.Context, tctx transaction_context.TransactionContext, user model.User, criteria model.KVSCriteria) (model.PrivateKVSBucket, error) {
+func (u Usecase) Get(ctx context.Context, user model.User, criteria model.KVSCriteria) (model.PrivateKVSBucket, error) {
 	var bucket model.PrivateKVSBucket
 	err := u.conn.BeginRoTransaction(ctx, func(ctx context.Context, tx transaction.Transaction) error {
 		var err error
