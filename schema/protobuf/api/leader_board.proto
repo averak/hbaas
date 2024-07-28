@@ -40,5 +40,4 @@ message LeaderBoardServiceSubmitScoreV1Request {
 
 message LeaderBoardServiceSubmitScoreV1Response {
   resource.LeaderBoard leader_board = 1;
-  bool event_created = 2;
 }

@@ -23,16 +23,16 @@ func NewLeaderBoard(id string, scored []LeaderBoardScore) LeaderBoard {
 // SubmitScore は、リーダーボードにスコアを提出します。
 // スコアの保持者はユーザとは限らない ので、誰でもスコアを上書きできるようになっています。
 // 例えばブログのいいね数ランキングをリーダーボード機能で実現する場合、いいね送信者がスコアを提出することになります。
-func (l *LeaderBoard) SubmitScore(scoreID string, score int, now time.Time) {
+func (l *LeaderBoard) SubmitScore(score LeaderBoardScore) {
 	var exists bool
 	for i := range l.Scores {
-		if l.Scores[i].ScoreID == scoreID {
-			l.Scores[i].update(score, now)
+		if l.Scores[i].eq(score) {
+			l.Scores[i].update(score.Score, score.Timestamp)
 			exists = true
 		}
 	}
 	if !exists {
-		l.Scores = append(l.Scores, NewLeaderBoardScore(scoreID, score, now))
+		l.Scores = append(l.Scores, score)
 	}
 	l.updateRanking()
 }
@@ -63,4 +63,8 @@ func NewLeaderBoardScore(scoreID string, score int, timestamp time.Time) LeaderB
 func (s *LeaderBoardScore) update(score int, timestamp time.Time) {
 	s.Score = score
 	s.Timestamp = timestamp
+}
+
+func (s LeaderBoardScore) eq(other LeaderBoardScore) bool {
+	return s.ScoreID == other.ScoreID
 }

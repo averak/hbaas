@@ -29,6 +29,11 @@ func (h handler) GetV1(ctx context.Context, req *advice.Request[*api.LeaderBoard
 }
 
 func (h handler) SubmitScoreV1(ctx context.Context, req *advice.Request[*api.LeaderBoardServiceSubmitScoreV1Request]) (*api.LeaderBoardServiceSubmitScoreV1Response, error) {
-	//TODO implement me
-	panic("implement me")
+	result, err := h.uc.SubmitScore(ctx, req.TransactionContext(), req.Msg().GetLeaderBoardId(), req.Msg().GetScoreId(), int(req.Msg().GetScore()))
+	if err != nil {
+		return nil, err
+	}
+	return &api.LeaderBoardServiceSubmitScoreV1Response{
+		LeaderBoard: pbconv.ToLeaderBoardPb(result),
+	}, nil
 }
