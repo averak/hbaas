@@ -12,6 +12,7 @@ We provide SDKs for various platforms such as Web, iOS, and Android.
 ## Features
 
 - User Authentication
+- Leader Board
 - Realtime Messaging
 - Key-Value Store
 - File Storage
