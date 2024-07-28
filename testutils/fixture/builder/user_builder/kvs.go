@@ -1,7 +1,6 @@
 package user_builder
 
 import (
-	"log"
 	"testing"
 
 	"github.com/averak/hbaas/app/core/numunit"
@@ -24,10 +23,7 @@ func (b PrivateKVSBucketBuilder) Build() model.PrivateKVSBucket {
 }
 
 func (b *PrivateKVSBucketBuilder) Entries(v ...model.KVSEntry) *PrivateKVSBucketBuilder {
-	err := b.data.Set(b.data.ETag(), v)
-	if err != nil {
-		log.Fatal(err)
-	}
+	b.data = model.NewPrivateKVSBucket(b.data.UserID, b.data.ETag(), append(b.data.Raw(), v...))
 	return b
 }
 
