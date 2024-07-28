@@ -1,24 +1,25 @@
-package error_response
+package error_response_test
 
 import (
 	"testing"
 
 	"connectrpc.com/connect"
+	"github.com/averak/hbaas/app/infrastructure/connect/error_response"
 	"github.com/averak/hbaas/protobuf/api/api_errors"
 	"github.com/averak/hbaas/testutils/testconnect"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNew(t *testing.T) {
-	type args[CODE CodeType] struct {
+	type args[CODE error_response.CodeType] struct {
 		code     CODE
 		severity api_errors.ErrorSeverity
 		message  string
 	}
-	type testCase[CODE CodeType] struct {
+	type testCase[CODE error_response.CodeType] struct {
 		name string
 		args args[CODE]
-		then func(t *testing.T, got Error)
+		then func(t *testing.T, got error_response.Error)
 	}
 	tests := []testCase[api_errors.ErrorCode_Common]{
 		{
@@ -26,14 +27,14 @@ func TestNew(t *testing.T) {
 			args: args[api_errors.ErrorCode_Common]{
 				code: api_errors.ErrorCode_COMMON_UNKNOWN,
 			},
-			then: func(t *testing.T, got Error) {
-				assert.Equal(t, connect.CodeUnknown, got.connectErr.Code())
+			then: func(t *testing.T, got error_response.Error) {
+				assert.Equal(t, connect.CodeUnknown, got.ConnectError().Code())
 
 				wantDetail := &api_errors.ErrorDetail{
 					ErrorCode:         int64(api_errors.ErrorCode_COMMON_UNKNOWN),
 					ErrorHandlingType: api_errors.ErrorHandlingType_ERROR_HANDLING_TYPE_TEMPORARY,
 				}
-				assert.EqualExportedValues(t, wantDetail, testconnect.GetErrorDetail(got.connectErr))
+				assert.EqualExportedValues(t, wantDetail, testconnect.GetErrorDetail(got.ConnectError()))
 			},
 		},
 		{
@@ -41,20 +42,20 @@ func TestNew(t *testing.T) {
 			args: args[api_errors.ErrorCode_Common]{
 				code: api_errors.ErrorCode_COMMON_INVALID_SESSION,
 			},
-			then: func(t *testing.T, got Error) {
-				assert.Equal(t, connect.CodeUnauthenticated, got.connectErr.Code())
+			then: func(t *testing.T, got error_response.Error) {
+				assert.Equal(t, connect.CodeUnauthenticated, got.ConnectError().Code())
 
 				wantDetail := &api_errors.ErrorDetail{
 					ErrorCode:         int64(api_errors.ErrorCode_COMMON_INVALID_SESSION),
 					ErrorHandlingType: api_errors.ErrorHandlingType_ERROR_HANDLING_TYPE_RECOVERABLE,
 				}
-				assert.EqualExportedValues(t, wantDetail, testconnect.GetErrorDetail(got.connectErr))
+				assert.EqualExportedValues(t, wantDetail, testconnect.GetErrorDetail(got.ConnectError()))
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := New(tt.args.code, tt.args.severity, tt.args.message)
+			err := error_response.New(tt.args.code, tt.args.severity, tt.args.message)
 			tt.then(t, err)
 		})
 	}

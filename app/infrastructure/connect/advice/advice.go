@@ -16,17 +16,17 @@ import (
 )
 
 type (
-	MethodOption                   = *custom_option.MethodOption
-	MethodErrDefinition            = *custom_option.MethodErrorDefinition
+	MethodOption                   = custom_option.MethodOption
+	MethodErrDefinition            = custom_option.MethodErrorDefinition
 	Method[REQ, RES proto.Message] func(context.Context, *Request[REQ]) (RES, error)
 
 	// Advice は、RPC メソッドの実行前後に処理を挟むための関数です。
 	// interceptor は MethodOption を解釈できないので、似た仕組みが別途必要になります。
-	Advice func(context.Context, proto.Message, mdval.IncomingMD, MethodInfo, func(context.Context, transaction_context.TransactionContext, *model.User, mdval.IncomingMD) (proto.Message, error)) error
+	Advice func(context.Context, proto.Message, mdval.IncomingMD, *MethodInfo, func(context.Context, transaction_context.TransactionContext, *model.User, mdval.IncomingMD) (proto.Message, error)) error
 )
 
 func NewAdvice(conn transaction.Connection, userRepo repository.UserRepository) Advice {
-	return func(ctx context.Context, req proto.Message, incomingMD mdval.IncomingMD, info MethodInfo, method func(context.Context, transaction_context.TransactionContext, *model.User, mdval.IncomingMD) (proto.Message, error)) error {
+	return func(ctx context.Context, req proto.Message, incomingMD mdval.IncomingMD, info *MethodInfo, method func(context.Context, transaction_context.TransactionContext, *model.User, mdval.IncomingMD) (proto.Message, error)) error {
 		params, err := fixPreconditionParams(ctx, incomingMD)
 		if err != nil {
 			return err
@@ -53,29 +53,28 @@ func NewAdvice(conn transaction.Connection, userRepo repository.UserRepository) 
 }
 
 type MethodInfo struct {
-	opt       MethodOption
-	errCauses map[error]MethodErrDefinition
+	opt       *MethodOption
+	errCauses map[error]*MethodErrDefinition
 }
 
-func NewMethodInfo(opt MethodOption, errCauses map[error]MethodErrDefinition) MethodInfo {
-	return MethodInfo{
+func NewMethodInfo(opt *MethodOption, errCauses map[error]*MethodErrDefinition) *MethodInfo {
+	return &MethodInfo{
 		opt:       opt,
 		errCauses: errCauses,
 	}
 }
 
-func (m MethodInfo) Option() MethodOption {
+func (m *MethodInfo) Option() *MethodOption {
 	return m.opt
 }
 
-func (m MethodInfo) FindErrorDefinition(err error) (MethodErrDefinition, bool) {
+func (m MethodInfo) FindErrorDefinition(err error) (*MethodErrDefinition, bool) {
 	for cause, def := range m.errCauses {
 		if errors.Is(err, cause) {
 			return def, true
 		}
 	}
-	var empty MethodErrDefinition
-	return empty, false
+	return nil, false
 }
 
 type Request[T any] struct {

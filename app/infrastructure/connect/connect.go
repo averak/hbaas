@@ -11,7 +11,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func Execute[REQ, RES proto.Message](ctx context.Context, req REQ, header http.Header, info advice.MethodInfo, method func(context.Context, *advice.Request[REQ]) (RES, error), adv advice.Advice) (RES, error) {
+func Execute[REQ, RES proto.Message](ctx context.Context, req REQ, header http.Header, info *advice.MethodInfo, method func(context.Context, *advice.Request[REQ]) (RES, error), adv advice.Advice) (RES, error) {
 	var res RES
 	wrap := func(ctx context.Context, tctx transaction_context.TransactionContext, principal *model.User, incomingMD mdval.IncomingMD) (proto.Message, error) {
 		var err error

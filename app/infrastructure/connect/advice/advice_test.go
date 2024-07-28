@@ -17,7 +17,7 @@ func TestMethodInfo_FindErrorDefinition(t *testing.T) {
 	)
 
 	type fields struct {
-		errCauses map[error]MethodErrDefinition
+		errCauses map[error]*MethodErrDefinition
 	}
 	type args struct {
 		err error
@@ -26,14 +26,14 @@ func TestMethodInfo_FindErrorDefinition(t *testing.T) {
 		name   string
 		fields fields
 		args   args
-		want   MethodErrDefinition
+		want   *MethodErrDefinition
 		want1  bool
 	}{
 		{
 			name: "エラー定義が存在する => true",
 			fields: fields{
-				errCauses: map[error]MethodErrDefinition{
-					err1: &custom_option.MethodErrorDefinition{
+				errCauses: map[error]*MethodErrDefinition{
+					err1: {
 						Code: 1,
 					},
 				},
@@ -49,8 +49,8 @@ func TestMethodInfo_FindErrorDefinition(t *testing.T) {
 		{
 			name: "エラー定義が存在しない => false",
 			fields: fields{
-				errCauses: map[error]MethodErrDefinition{
-					err1: &custom_option.MethodErrorDefinition{
+				errCauses: map[error]*MethodErrDefinition{
+					err1: {
 						Code: 1,
 					},
 				},
