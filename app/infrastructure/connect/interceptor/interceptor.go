@@ -2,6 +2,7 @@ package interceptor
 
 import (
 	"connectrpc.com/connect"
+	"github.com/averak/hbaas/app/core/build_info"
 )
 
 func New() []connect.Interceptor {
@@ -12,5 +13,6 @@ func New() []connect.Interceptor {
 		NewTraceInterceptor(),
 		NewErrorHandlingInterceptor(),
 		NewAccessLogInterceptor(),
+		NewResponseMetadataInterceptor(build_info.ServerVersion()),
 	}
 }
