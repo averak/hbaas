@@ -9,8 +9,8 @@ import (
 
 func TestNewLeaderBoard(t *testing.T) {
 	type args struct {
-		eventID  string
-		entities []LeaderBoardEntity
+		id     string
+		scores []LeaderBoardScore
 	}
 	tests := []struct {
 		name string
@@ -20,26 +20,26 @@ func TestNewLeaderBoard(t *testing.T) {
 		{
 			name: "ソートされたリーダーボードが生成される",
 			args: args{
-				entities: []LeaderBoardEntity{
+				scores: []LeaderBoardScore{
 					{
-						EntityID: "1",
-						Score:    1,
+						ScoreID: "1",
+						Score:   1,
 					},
 					{
-						EntityID: "2",
-						Score:    2,
+						ScoreID: "2",
+						Score:   2,
 					},
 				},
 			},
 			want: LeaderBoard{
-				Entries: []LeaderBoardEntity{
+				Scores: []LeaderBoardScore{
 					{
-						EntityID: "2",
-						Score:    2,
+						ScoreID: "2",
+						Score:   2,
 					},
 					{
-						EntityID: "1",
-						Score:    1,
+						ScoreID: "1",
+						Score:   1,
 					},
 				},
 			},
@@ -47,7 +47,7 @@ func TestNewLeaderBoard(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, NewLeaderBoard(tt.args.eventID, tt.args.entities), "NewLeaderBoard(%v, %v)", tt.args.eventID, tt.args.entities)
+			assert.Equal(t, tt.want, NewLeaderBoard(tt.args.id, tt.args.scores))
 		})
 	}
 }
@@ -56,7 +56,7 @@ func TestLeaderBoard_SubmitScore(t *testing.T) {
 	now := time.Now()
 
 	type fields struct {
-		Entries []LeaderBoardEntity
+		Scores []LeaderBoardScore
 	}
 	type args struct {
 		entityID string
@@ -72,9 +72,9 @@ func TestLeaderBoard_SubmitScore(t *testing.T) {
 		{
 			name: "エンティティが存在する => スコアが更新される",
 			fields: fields{
-				Entries: []LeaderBoardEntity{
+				Scores: []LeaderBoardScore{
 					{
-						EntityID:  "1",
+						ScoreID:   "1",
 						Score:     1,
 						Timestamp: now.Add(-time.Hour),
 					},
@@ -86,9 +86,9 @@ func TestLeaderBoard_SubmitScore(t *testing.T) {
 				now:      now,
 			},
 			want: LeaderBoard{
-				Entries: []LeaderBoardEntity{
+				Scores: []LeaderBoardScore{
 					{
-						EntityID:  "1",
+						ScoreID:   "1",
 						Score:     2,
 						Timestamp: now,
 					},
@@ -98,9 +98,9 @@ func TestLeaderBoard_SubmitScore(t *testing.T) {
 		{
 			name: "エンティティが存在しない => スコアが追加される",
 			fields: fields{
-				Entries: []LeaderBoardEntity{
+				Scores: []LeaderBoardScore{
 					{
-						EntityID:  "1",
+						ScoreID:   "1",
 						Score:     1,
 						Timestamp: now,
 					},
@@ -112,14 +112,14 @@ func TestLeaderBoard_SubmitScore(t *testing.T) {
 				now:      now,
 			},
 			want: LeaderBoard{
-				Entries: []LeaderBoardEntity{
+				Scores: []LeaderBoardScore{
 					{
-						EntityID:  "2",
+						ScoreID:   "2",
 						Score:     2,
 						Timestamp: now,
 					},
 					{
-						EntityID:  "1",
+						ScoreID:   "1",
 						Score:     1,
 						Timestamp: now,
 					},
@@ -130,7 +130,7 @@ func TestLeaderBoard_SubmitScore(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			l := LeaderBoard{
-				Entries: tt.fields.Entries,
+				Scores: tt.fields.Scores,
 			}
 			l.SubmitScore(tt.args.entityID, tt.args.score, tt.args.now)
 			assert.Equal(t, tt.want, l)
@@ -140,8 +140,7 @@ func TestLeaderBoard_SubmitScore(t *testing.T) {
 
 func TestLeaderBoard_updateRanking(t *testing.T) {
 	type fields struct {
-		EventID string
-		Entries []LeaderBoardEntity
+		Scores []LeaderBoardScore
 	}
 	tests := []struct {
 		name   string
@@ -151,37 +150,35 @@ func TestLeaderBoard_updateRanking(t *testing.T) {
 		{
 			name: "スコアの降順でソートする",
 			fields: fields{
-				Entries: []LeaderBoardEntity{
+				Scores: []LeaderBoardScore{
 					{
-						EntityID: "1",
-						Score:    1,
+						ScoreID: "1",
+						Score:   1,
 					},
 					{
-						EntityID: "2",
-						Score:    2,
+						ScoreID: "2",
+						Score:   2,
 					},
 				},
 			},
 			want: LeaderBoard{
-				Entries: []LeaderBoardEntity{
+				Scores: []LeaderBoardScore{
 					{
-						EntityID: "2",
-						Score:    2,
+						ScoreID: "2",
+						Score:   2,
 					},
 					{
-						EntityID: "1",
-						Score:    1,
+						ScoreID: "1",
+						Score:   1,
 					},
 				},
 			},
 		},
-		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			l := LeaderBoard{
-				EventID: tt.fields.EventID,
-				Entries: tt.fields.Entries,
+				Scores: tt.fields.Scores,
 			}
 			l.updateRanking()
 			assert.Equal(t, tt.want, l)

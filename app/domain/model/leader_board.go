@@ -7,55 +7,60 @@ import (
 )
 
 type LeaderBoard struct {
-	EventID string
-	Entries []LeaderBoardEntity
+	ID     string
+	Scores []LeaderBoardScore
 }
 
-func NewLeaderBoard(eventID string, entities []LeaderBoardEntity) LeaderBoard {
+func NewLeaderBoard(id string, scored []LeaderBoardScore) LeaderBoard {
 	res := LeaderBoard{
-		EventID: eventID,
-		Entries: entities,
+		ID:     id,
+		Scores: scored,
 	}
 	res.updateRanking()
 	return res
 }
 
 // SubmitScore は、リーダーボードにスコアを提出します。
-func (l *LeaderBoard) SubmitScore(entityID string, score int, now time.Time) {
-	for i := range l.Entries {
-		if l.Entries[i].EntityID == entityID {
-			l.Entries[i].Update(score, now)
-			l.updateRanking()
-			return
+// スコアの保持者はユーザとは限らない ので、誰でもスコアを上書きできるようになっています。
+// 例えばブログのいいね数ランキングをリーダーボード機能で実現する場合、いいね送信者がスコアを提出することになります。
+func (l *LeaderBoard) SubmitScore(scoreID string, score int, now time.Time) {
+	var exists bool
+	for i := range l.Scores {
+		if l.Scores[i].ScoreID == scoreID {
+			l.Scores[i].update(score, now)
+			exists = true
 		}
 	}
-	l.Entries = append(l.Entries, NewLeaderBoardEntity(entityID, score, now))
+	if !exists {
+		l.Scores = append(l.Scores, NewLeaderBoardScore(scoreID, score, now))
+	}
 	l.updateRanking()
 }
 
 func (l *LeaderBoard) updateRanking() {
-	l.Entries = vector.New(l.Entries).Sort(func(x, y LeaderBoardEntity) bool {
+	l.Scores = vector.New(l.Scores).Sort(func(x, y LeaderBoardScore) bool {
 		return x.Score > y.Score
 	})
 }
 
-// LeaderBoardEntity は、スコアが登録される任意のオブジェクトを表します。
-// ユーザとは限らない点に注意してください。
-type LeaderBoardEntity struct {
-	EntityID  string
+// LeaderBoardScore は、リーダーボードに登録されるスコアを表します。
+type LeaderBoardScore struct {
+	// ScoreID は、スコア集計対象である任意のオブジェクトIDが指定されます。
+	// 例: ユーザID、ブログID
+	ScoreID   string
 	Score     int
 	Timestamp time.Time
 }
 
-func NewLeaderBoardEntity(entityID string, score int, timestamp time.Time) LeaderBoardEntity {
-	return LeaderBoardEntity{
-		EntityID:  entityID,
+func NewLeaderBoardScore(scoreID string, score int, timestamp time.Time) LeaderBoardScore {
+	return LeaderBoardScore{
+		ScoreID:   scoreID,
 		Score:     score,
 		Timestamp: timestamp,
 	}
 }
 
-func (e *LeaderBoardEntity) Update(score int, timestamp time.Time) {
-	e.Score = score
-	e.Timestamp = timestamp
+func (s *LeaderBoardScore) update(score int, timestamp time.Time) {
+	s.Score = score
+	s.Timestamp = timestamp
 }

@@ -28,19 +28,19 @@ CREATE UNIQUE INDEX "uq__user_authentications__baas_user_id" ON "user_authentica
 
 CREATE TABLE "private_kvs_entries"
 (
-    "user_id"    UUID NOT NULL,
+    "user_id"    UUID         NOT NULL,
     "key"        VARCHAR(255) NOT NULL,
-    "value"      BYTEA     NOT NULL,
-    "created_at" TIMESTAMP NOT NULL,
-    "updated_at" TIMESTAMP NOT NULL,
+    "value"      BYTEA        NOT NULL,
+    "created_at" TIMESTAMP    NOT NULL,
+    "updated_at" TIMESTAMP    NOT NULL,
     PRIMARY KEY ("user_id", "key"),
     CONSTRAINT "fk__private_kvs_entries__user_id" FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE CASCADE
 );
 
 CREATE TABLE "private_kvs_etags"
 (
-    "user_id"    UUID NOT NULL,
-    "etag"       UUID NOT NULL,
+    "user_id"    UUID      NOT NULL,
+    "etag"       UUID      NOT NULL,
     "created_at" TIMESTAMP NOT NULL,
     "updated_at" TIMESTAMP NOT NULL,
     PRIMARY KEY ("user_id"),
@@ -58,6 +58,26 @@ CREATE TABLE "global_kvs_entries"
     "created_at" TIMESTAMP    NOT NULL,
     "updated_at" TIMESTAMP    NOT NULL,
     PRIMARY KEY ("key")
+);
+
+CREATE TABLE "leader_board"
+(
+    "id"         VARCHAR(255) NOT NULL,
+    "created_at" TIMESTAMP    NOT NULL,
+    "updated_at" TIMESTAMP    NOT NULL,
+    PRIMARY KEY ("id")
+);
+
+CREATE TABLE "leader_board_scores"
+(
+    "leader_board_id" VARCHAR(255) NOT NULL,
+    "score_id"        VARCHAR(255) NOT NULL,
+    "score"           INTEGER      NOT NULL,
+    "timestamp"       TIMESTAMP    NOT NULL,
+    "created_at"      TIMESTAMP    NOT NULL,
+    "updated_at"      TIMESTAMP    NOT NULL,
+    PRIMARY KEY ("leader_board_id", "score_id"),
+    CONSTRAINT "fk__leader_board_scores__leader_board_id" FOREIGN KEY ("leader_board_id") REFERENCES "leader_board" ("id") ON DELETE CASCADE
 );
 
 CREATE TABLE "echos"
