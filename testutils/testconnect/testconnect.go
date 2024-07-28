@@ -61,7 +61,7 @@ func WithSpoofingUserID(userID uuid.UUID) Option {
 	}
 }
 
-func WithSessionToken(t *testing.T, userID uuid.UUID) Option {
+func WithSession(t *testing.T, userID uuid.UUID) Option {
 	t.Helper()
 
 	return func(header http.Header) {
