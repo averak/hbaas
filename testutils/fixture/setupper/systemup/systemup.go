@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/averak/hbaas/app/adapter/repoimpl/global_kvs_repoimpl"
+	"github.com/averak/hbaas/app/adapter/repoimpl/leader_board_repoimpl"
 	"github.com/averak/hbaas/app/domain/repository"
 	"github.com/averak/hbaas/app/domain/repository/transaction"
 	"github.com/averak/hbaas/testutils"
@@ -12,9 +13,11 @@ import (
 )
 
 var repos = struct {
-	GlobalKVSRepo repository.GlobalKVSRepository
+	GlobalKVSRepo   repository.GlobalKVSRepository
+	LeaderBoardRepo repository.LeaderBoardRepository
 }{
-	GlobalKVSRepo: global_kvs_repoimpl.NewRepository(),
+	GlobalKVSRepo:   global_kvs_repoimpl.NewRepository(),
+	LeaderBoardRepo: leader_board_repoimpl.NewRepository(),
 }
 
 func Setup(t *testing.T, ctx context.Context, data ...system_builder.Data) {
@@ -29,6 +32,13 @@ func Setup(t *testing.T, ctx context.Context, data ...system_builder.Data) {
 		for _, d := range data {
 			if d.GlobalKVSBucket != nil {
 				err := repos.GlobalKVSRepo.Save(ctx, tx, *d.GlobalKVSBucket)
+				if err != nil {
+					return err
+				}
+			}
+
+			for _, v := range d.LeaderBoard {
+				err := repos.LeaderBoardRepo.Save(ctx, tx, *v)
 				if err != nil {
 					return err
 				}
