@@ -22,7 +22,7 @@ func NewHandler(uc *private_kvs_usecase.Usecase, advice advice.Advice) apiconnec
 
 func (h handler) GetETagV1(ctx context.Context, req *advice.Request[*api.PrivateKVSServiceGetETagV1Request]) (*api.PrivateKVSServiceGetETagV1Response, error) {
 	user, _ := req.Principal()
-	result, err := h.uc.Get(ctx, req.TransactionContext(), user, model.NewKVSCriteria(nil, nil))
+	result, err := h.uc.Get(ctx, user, model.NewKVSCriteria(nil, nil))
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +38,7 @@ func (h handler) GetETagV1(ctx context.Context, req *advice.Request[*api.Private
 
 func (h handler) GetV1(ctx context.Context, req *advice.Request[*api.PrivateKVSServiceGetV1Request]) (*api.PrivateKVSServiceGetV1Response, error) {
 	user, _ := req.Principal()
-	result, err := h.uc.Get(ctx, req.TransactionContext(), user, pbconv.FromKVSCriteriaPb(req.Msg().GetCriteria()))
+	result, err := h.uc.Get(ctx, user, pbconv.FromKVSCriteriaPb(req.Msg().GetCriteria()))
 	if err != nil {
 		return nil, err
 	}
@@ -54,9 +54,33 @@ func (h handler) GetV1(ctx context.Context, req *advice.Request[*api.PrivateKVSS
 }
 
 func (h handler) SetV1(ctx context.Context, req *advice.Request[*api.PrivateKVSServiceSetV1Request]) (*api.PrivateKVSServiceSetV1Response, error) {
-	//TODO implement me
-	panic("implement me")
+	user, _ := req.Principal()
+	entries, err := pbconv.FromKVSEntryPbs(req.Msg().GetEntries())
+	if err != nil {
+		return nil, err
+	}
+	var etag uuid.UUID
+	if req.Msg().GetEtag() != "" {
+		etag, err = uuid.Parse(req.Msg().GetEtag())
+		if err != nil {
+			return nil, err
+		}
+	}
+	bucket, err := h.uc.Set(ctx, user, etag, entries)
+	if err != nil {
+		return nil, err
+	}
+
+	var lastEtag string
+	if bucket.ETag() != uuid.Nil {
+		lastEtag = bucket.ETag().String()
+	}
+	return &api.PrivateKVSServiceSetV1Response{
+		Etag: lastEtag,
+	}, nil
 }
 
 func (h handler) SetV1Errors(errs *api.PrivateKVSServiceSetV1Errors) {
+	errs.Map(model.ErrKVSEntryValueTooLarge, errs.ILLEGAL_ARGUMENT)
+	errs.Map(model.ErrPrivateKVSETagMismatch, errs.RESOURCE_CONFLICT)
 }

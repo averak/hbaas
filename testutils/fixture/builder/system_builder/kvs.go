@@ -19,6 +19,6 @@ func (b GlobalKVSBucketBuilder) Build() model.GlobalKVSBucket {
 }
 
 func (b *GlobalKVSBucketBuilder) Entries(v ...model.KVSEntry) *GlobalKVSBucketBuilder {
-	b.data.Set(v...)
+	b.data.Set(v)
 	return b
 }

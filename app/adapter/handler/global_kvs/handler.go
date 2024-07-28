@@ -20,7 +20,7 @@ func NewHandler(uc *global_kvs_usecase.Usecase, advice advice.Advice) apiconnect
 }
 
 func (h handler) GetV1(ctx context.Context, req *advice.Request[*api.GlobalKVSServiceGetV1Request]) (*api.GlobalKVSServiceGetV1Response, error) {
-	result, err := h.uc.Get(ctx, req.TransactionContext(), pbconv.FromKVSCriteriaPb(req.Msg().GetCriteria()))
+	result, err := h.uc.Get(ctx, pbconv.FromKVSCriteriaPb(req.Msg().GetCriteria()))
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +34,7 @@ func (h handler) SetV1(ctx context.Context, req *advice.Request[*api.GlobalKVSSe
 	if err != nil {
 		return nil, err
 	}
-	err = h.uc.Set(ctx, req.TransactionContext(), entries)
+	err = h.uc.Set(ctx, entries)
 	if err != nil {
 		return nil, err
 	}
