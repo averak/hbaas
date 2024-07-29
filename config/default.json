@@ -4,6 +4,9 @@
     "firebase": {
       "use_stub": true
     },
+    "pubsub": {
+      "use_emulator": true
+    },
     "trace": {
       "enabled": false
     }

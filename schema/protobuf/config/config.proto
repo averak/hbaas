@@ -14,10 +14,15 @@ message Config {
 message GoogleCloud {
   string project_id = 1;
   Firebase firebase = 2;
-  Trace trace = 3;
+  PubSub pubsub = 3;
+  Trace trace = 4;
 
   message Firebase {
     bool use_stub = 1;
+  }
+
+  message PubSub {
+    bool use_emulator = 1;
   }
 
   message Trace {
