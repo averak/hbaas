@@ -1,0 +1,18 @@
+syntax = "proto3";
+package cloud_pubsub;
+
+enum EventType {
+  EVENT_TYPE_UNSPECIFIED = 0;
+  EVENT_TYPE_BAAS_USER_DELETION = 1;
+}
+
+message Message {
+  EventType event_type = 1;
+  oneof payload {
+    BaasUserDeletion baas_user_deletion = 2;
+  }
+}
+
+message BaasUserDeletion {
+  string baas_user_id = 1;
+}

@@ -35,7 +35,7 @@ func Test_checkSession(t *testing.T) {
 	sessionToken := func(userID uuid.UUID) string {
 		sessionToken, err := session.EncodeSessionToken(
 			session.NewSession(userID, now, now.Add(1*time.Hour)),
-			[]byte(config.Get().GetSession().GetSecretKey()),
+			[]byte(config.Get().GetApiServer().GetSession().GetSecretKey()),
 		)
 		if err != nil {
 			t.Fatal(err)
@@ -113,8 +113,10 @@ func Test_checkSession(t *testing.T) {
 			Given: given{
 				conf: &config.Config{
 					Debug: false,
-					Session: &pb.Session{
-						SecretKey: config.Get().GetSession().GetSecretKey(),
+					ApiServer: &pb.APIServer{
+						Session: &pb.APIServer_Session{
+							SecretKey: config.Get().GetApiServer().GetSession().GetSecretKey(),
+						},
 					},
 				},
 				seeds: []fixture.Seed{

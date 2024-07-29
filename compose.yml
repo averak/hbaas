@@ -10,7 +10,7 @@ services:
     volumes:
       - postgres:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready"]
+      test: [ "CMD-SHELL", "pg_isready" ]
       interval: 3s
       timeout: 3s
       retries: 100
@@ -29,6 +29,16 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+
+  cloud-pubsub:
+    image: gcr.io/google.com/cloudsdktool/cloud-sdk:emulators
+    platform: linux/amd64
+    command: >
+      bash -c 'gcloud beta emulators pubsub start --host-port=$${PUBSUB_EMULATOR_HOST}'
+    environment:
+      PUBSUB_EMULATOR_HOST: 0.0.0.0:8085
+    ports:
+      - 8085:8085
 
 volumes:
   postgres:
