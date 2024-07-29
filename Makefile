@@ -50,11 +50,15 @@ db-clean:
 	docker-compose up -d postgres
 
 .PHONY: build
-build: build-api-server build-batch-job
+build: build-api-server build-async-worker build-batch-job
 
 .PHONE: build-api-server
 build-api-server:
 	CGO_ENABLED=0 go build -ldflags="$(GO_LDFLAGS)" -o tmp/build/api_server ./entrypoint/api_server
+
+.PHONY: build-async-worker
+build-async-worker:
+	CGO_ENABLED=0 go build -ldflags="$(GO_LDFLAGS)" -o tmp/build/async_worker ./entrypoint/async_worker
 
 .PHONY: build-batch-job
 build-batch-job:
