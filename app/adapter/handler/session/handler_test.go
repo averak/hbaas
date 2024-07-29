@@ -95,9 +95,9 @@ func Test_handler_AuthorizeV1(t *testing.T) {
 						wantSession := session.Session{
 							PrincipalID: faker.UUIDv5("u1"),
 							IssuedAt:    now,
-							ExpiresAt:   now.Add(time.Duration(config.Get().GetSession().GetExpirationSeconds()) * time.Second),
+							ExpiresAt:   now.Add(time.Duration(config.Get().GetApiServer().GetSession().GetExpirationSeconds()) * time.Second),
 						}
-						sess, err := session.DecodeSessionToken(got.Msg.GetSessionToken(), []byte(config.Get().GetSession().GetSecretKey()), time.Now())
+						sess, err := session.DecodeSessionToken(got.Msg.GetSessionToken(), []byte(config.Get().GetApiServer().GetSession().GetSecretKey()), time.Now())
 						if err != nil {
 							t.Fatal(err)
 						}
@@ -107,7 +107,7 @@ func Test_handler_AuthorizeV1(t *testing.T) {
 
 						want := &api.SessionServiceAuthorizeV1Response{
 							UserId:    faker.UUIDv5("u1").String(),
-							ExpiresAt: timestamppb.New(now.Add(time.Duration(config.Get().GetSession().GetExpirationSeconds()) * time.Second)),
+							ExpiresAt: timestamppb.New(now.Add(time.Duration(config.Get().GetApiServer().GetSession().GetExpirationSeconds()) * time.Second)),
 						}
 						if diff := cmp.Diff(want, got.Msg, cmpopts.IgnoreUnexported(api.SessionServiceAuthorizeV1Response{}, timestamppb.Timestamp{}), cmpopts.IgnoreFields(api.SessionServiceAuthorizeV1Response{}, "SessionToken")); diff != "" {
 							t.Errorf("(-want, +got)\n%s", diff)
@@ -157,9 +157,9 @@ func Test_handler_AuthorizeV1(t *testing.T) {
 
 						wantSession := session.Session{
 							IssuedAt:  now,
-							ExpiresAt: now.Add(time.Duration(config.Get().GetSession().GetExpirationSeconds()) * time.Second),
+							ExpiresAt: now.Add(time.Duration(config.Get().GetApiServer().GetSession().GetExpirationSeconds()) * time.Second),
 						}
-						sess, err := session.DecodeSessionToken(got.Msg.GetSessionToken(), []byte(config.Get().GetSession().GetSecretKey()), time.Now())
+						sess, err := session.DecodeSessionToken(got.Msg.GetSessionToken(), []byte(config.Get().GetApiServer().GetSession().GetSecretKey()), time.Now())
 						if err != nil {
 							t.Fatal(err)
 						}
@@ -169,7 +169,7 @@ func Test_handler_AuthorizeV1(t *testing.T) {
 
 						want := &api.SessionServiceAuthorizeV1Response{
 							UserId:    sess.PrincipalID.String(),
-							ExpiresAt: timestamppb.New(now.Add(time.Duration(config.Get().GetSession().GetExpirationSeconds()) * time.Second)),
+							ExpiresAt: timestamppb.New(now.Add(time.Duration(config.Get().GetApiServer().GetSession().GetExpirationSeconds()) * time.Second)),
 						}
 						if diff := cmp.Diff(want, got.Msg, cmpopts.IgnoreUnexported(api.SessionServiceAuthorizeV1Response{}, timestamppb.Timestamp{}), cmpopts.IgnoreFields(api.SessionServiceAuthorizeV1Response{}, "SessionToken")); diff != "" {
 							t.Errorf("(-want, +got)\n%s", diff)

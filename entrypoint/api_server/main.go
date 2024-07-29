@@ -46,15 +46,15 @@ func main() {
 		mux.Handle(grpcreflect.NewHandlerV1Alpha(reflector))
 	}
 	handler := cors.New(cors.Options{
-		AllowedOrigins:   config.Get().GetCors().GetAllowedOrigins(),
-		AllowedMethods:   config.Get().GetCors().GetAllowedMethods(),
-		AllowedHeaders:   config.Get().GetCors().GetAllowedHeaders(),
-		ExposedHeaders:   config.Get().GetCors().GetExposeHeaders(),
-		MaxAge:           int(config.Get().GetCors().GetMaxAge()),
-		AllowCredentials: config.Get().GetCors().GetAllowCredentials(),
+		AllowedOrigins:   config.Get().GetApiServer().GetCors().GetAllowedOrigins(),
+		AllowedMethods:   config.Get().GetApiServer().GetCors().GetAllowedMethods(),
+		AllowedHeaders:   config.Get().GetApiServer().GetCors().GetAllowedHeaders(),
+		ExposedHeaders:   config.Get().GetApiServer().GetCors().GetExposeHeaders(),
+		MaxAge:           int(config.Get().GetApiServer().GetCors().GetMaxAge()),
+		AllowCredentials: config.Get().GetApiServer().GetCors().GetAllowCredentials(),
 	}).Handler(h2c.NewHandler(mux, &http2.Server{}))
 	svr := http.Server{
-		Addr:         fmt.Sprintf(":%d", config.Get().GetPort()),
+		Addr:         fmt.Sprintf(":%d", config.Get().GetApiServer().GetPort()),
 		Handler:      handler,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
@@ -84,6 +84,6 @@ func main() {
 		})
 		cancel()
 	case <-sigChan:
-		logger.Notice(ctx, "Shutdown signal received, shutting down server...")
+		logger.Notice(ctx, "Shutdown signal received, shutting down process...")
 	}
 }

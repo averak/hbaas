@@ -37,7 +37,7 @@ func checkSession(ctx context.Context, conf *config.Config, repo repository.User
 	if !ok {
 		return nil, error_response.New(api_errors.ErrorCode_COMMON_INVALID_SESSION, api_errors.ErrorSeverity_ERROR_SEVERITY_WARNING, "session token not found")
 	}
-	sess, err := session.DecodeSessionToken(sessionToken, []byte(conf.GetSession().GetSecretKey()), now)
+	sess, err := session.DecodeSessionToken(sessionToken, []byte(conf.GetApiServer().GetSession().GetSecretKey()), now)
 	if err != nil {
 		return nil, error_response.New(api_errors.ErrorCode_COMMON_INVALID_SESSION, api_errors.ErrorSeverity_ERROR_SEVERITY_WARNING, "invalid session")
 	}

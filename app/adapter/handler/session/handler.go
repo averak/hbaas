@@ -28,9 +28,9 @@ func (h handler) AuthorizeV1(ctx context.Context, req *advice.Request[*api.Sessi
 		return nil, err
 	}
 
-	expiresAt := result.AuthorizedAt.Add(time.Duration(config.Get().GetSession().GetExpirationSeconds()) * time.Second)
+	expiresAt := result.AuthorizedAt.Add(time.Duration(config.Get().GetApiServer().GetSession().GetExpirationSeconds()) * time.Second)
 	sess := session.NewSession(result.UserID, result.AuthorizedAt, expiresAt)
-	token, err := session.EncodeSessionToken(sess, []byte(config.Get().GetSession().GetSecretKey()))
+	token, err := session.EncodeSessionToken(sess, []byte(config.Get().GetApiServer().GetSession().GetSecretKey()))
 	if err != nil {
 		return nil, err
 	}

@@ -66,7 +66,7 @@ func WithSession(t *testing.T, userID uuid.UUID) Option {
 
 	return func(header http.Header) {
 		sess := session.NewSession(userID, time.Now(), faker.MaxTime())
-		token, err := session.EncodeSessionToken(sess, []byte(config.Get().GetSession().GetSecretKey()))
+		token, err := session.EncodeSessionToken(sess, []byte(config.Get().GetApiServer().GetSession().GetSecretKey()))
 		if err != nil {
 			t.Fatal(err)
 		}
