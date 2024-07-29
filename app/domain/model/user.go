@@ -10,6 +10,12 @@ var (
 	ErrUserDeactivated = errors.New("user is deactivated")
 )
 
+const (
+	// DeletedUserEmail は、削除されたユーザのメールアドレスを表します。
+	// メールアドレスの UNIQUE 制約は論理削除されていないレコードのみを対象としているため、削除済みユーザのメールアドレスが重複しても問題ない。
+	DeletedUserEmail = ""
+)
+
 type UserStatus int
 
 const (
@@ -34,6 +40,11 @@ func NewUser(id uuid.UUID, email string, status UserStatus) User {
 		Email:  email,
 		Status: status,
 	}
+}
+
+func (u *User) Delete() {
+	u.Status = UserStatusDeactivated
+	u.Email = DeletedUserEmail
 }
 
 func (u *User) Activate() error {

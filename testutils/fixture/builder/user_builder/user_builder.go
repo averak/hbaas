@@ -29,6 +29,11 @@ func (b UserBuilder) Build() Data {
 	return *b.data
 }
 
+func (b *UserBuilder) Status(v model.UserStatus) *UserBuilder {
+	b.data.User.Status = v
+	return b
+}
+
 func (b *UserBuilder) Authentication(v model.UserAuthentication) *UserBuilder {
 	b.data.Authentication = &v
 	return b

@@ -6,4 +6,5 @@ import (
 
 var SuperSet = wire.NewSet(
 	NewFirebaseIdentityVerifier,
+	NewBaasUserDeletionTaskQueue,
 )

@@ -46,5 +46,11 @@
       "expiration_seconds": 3600,
       "secret_key": "********************************"
     }
+  },
+  "async_worker": {
+    "pubsub_topic_id": "async-worker",
+    "pubsub_subscription_id": "async-worker",
+    "pull_interval_ms": 1000,
+    "timeout_ms": 10000
   }
 }
