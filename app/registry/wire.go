@@ -25,6 +25,7 @@ var SuperSet = wire.NewSet(
 	usecase.SuperSet,
 	db.NewConnection,
 	advice.NewAdvice,
+	google_cloud.NewPubSubClient,
 	newFirebaseClient,
 )
 

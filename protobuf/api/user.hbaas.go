@@ -22,6 +22,10 @@ type hbaas_UserServiceHandler interface {
 	// プロダクトごとに、独自のスキーマを定義してください。
 	EditProfileV1(ctx context.Context, req *advice.Request[*UserServiceEditProfileV1Request]) (*UserServiceEditProfileV1Response, error)
 	EditProfileV1Errors(errs *UserServiceEditProfileV1Errors)
+
+	// 退会処理を行います。
+	// アカウントは永続的に削除され、復元することはできません。
+	AccountDeleteV1(ctx context.Context, req *advice.Request[*UserServiceAccountDeleteV1Request]) (*UserServiceAccountDeleteV1Response, error)
 }
 
 type UserServiceActivateV1Errors struct {
@@ -48,9 +52,9 @@ func (e *UserServiceEditProfileV1Errors) Map(from error, to *advice.MethodErrDef
 
 func NewUserServiceHandler(handler hbaas_UserServiceHandler, adv advice.Advice) hbaas_UserServiceHandlerImpl {
 	service := File_api_user_proto.Services().ByName("UserService")
-	causes := [2]map[error]*advice.MethodErrDefinition{{}, {}}
-	methodOpts := [2]*advice.MethodOption{}
-	for i, m := 0, service.Methods(); i < 2; i++ {
+	causes := [3]map[error]*advice.MethodErrDefinition{{}, {}, {}}
+	methodOpts := [3]*advice.MethodOption{}
+	for i, m := 0, service.Methods(); i < 3; i++ {
 		methodOpts[i] = proto.GetExtension(m.Get(i).Options(), custom_option.E_MethodOption).(*advice.MethodOption)
 	}
 	handler.ActivateV1Errors(&UserServiceActivateV1Errors{
@@ -61,9 +65,10 @@ func NewUserServiceHandler(handler hbaas_UserServiceHandler, adv advice.Advice) 
 		ILLEGAL_ARGUMENT: methodOpts[1].GetMethodErrorDefinitions()[0],
 		causes:           causes[1],
 	})
-	methodInfo := [2]*advice.MethodInfo{
+	methodInfo := [3]*advice.MethodInfo{
 		advice.NewMethodInfo(methodOpts[0], causes[0]),
 		advice.NewMethodInfo(methodOpts[1], causes[1]),
+		advice.NewMethodInfo(methodOpts[2], causes[2]),
 	}
 	return hbaas_UserServiceHandlerImpl{handler: handler, advice: adv, methodInfo: methodInfo}
 }
@@ -71,7 +76,7 @@ func NewUserServiceHandler(handler hbaas_UserServiceHandler, adv advice.Advice) 
 type hbaas_UserServiceHandlerImpl struct {
 	handler    hbaas_UserServiceHandler
 	advice     advice.Advice
-	methodInfo [2]*advice.MethodInfo
+	methodInfo [3]*advice.MethodInfo
 }
 
 func (h hbaas_UserServiceHandlerImpl) ActivateV1(ctx context.Context, req *connect.Request[UserServiceActivateV1Request]) (*connect.Response[UserServiceActivateV1Response], error) {
@@ -84,6 +89,14 @@ func (h hbaas_UserServiceHandlerImpl) ActivateV1(ctx context.Context, req *conne
 
 func (h hbaas_UserServiceHandlerImpl) EditProfileV1(ctx context.Context, req *connect.Request[UserServiceEditProfileV1Request]) (*connect.Response[UserServiceEditProfileV1Response], error) {
 	res, err := connect1.Execute(ctx, req.Msg, req.Header(), h.methodInfo[1], h.handler.EditProfileV1, h.advice)
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(res), nil
+}
+
+func (h hbaas_UserServiceHandlerImpl) AccountDeleteV1(ctx context.Context, req *connect.Request[UserServiceAccountDeleteV1Request]) (*connect.Response[UserServiceAccountDeleteV1Response], error) {
+	res, err := connect1.Execute(ctx, req.Msg, req.Header(), h.methodInfo[2], h.handler.AccountDeleteV1, h.advice)
 	if err != nil {
 		return nil, err
 	}

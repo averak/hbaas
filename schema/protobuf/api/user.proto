@@ -34,6 +34,10 @@ service UserService {
       ]
     };
   }
+
+  // 退会処理を行います。
+  // アカウントは永続的に削除され、復元することはできません。
+  rpc AccountDeleteV1(UserServiceAccountDeleteV1Request) returns (UserServiceAccountDeleteV1Response);
 }
 
 message UserServiceActivateV1Request {}
@@ -45,3 +49,7 @@ message UserServiceEditProfileV1Request {
 }
 
 message UserServiceEditProfileV1Response {}
+
+message UserServiceAccountDeleteV1Request {}
+
+message UserServiceAccountDeleteV1Response {}

@@ -9,6 +9,7 @@ import (
 	"github.com/averak/hbaas/app/adapter/handler/leader_board"
 	"github.com/averak/hbaas/app/adapter/handler/private_kvs"
 	"github.com/averak/hbaas/app/adapter/handler/session"
+	"github.com/averak/hbaas/app/adapter/handler/user"
 	"github.com/averak/hbaas/app/core/config"
 	"github.com/averak/hbaas/app/infrastructure/connect/interceptor"
 	"github.com/averak/hbaas/protobuf/api/apiconnect"
@@ -21,6 +22,7 @@ var SuperSet = wire.NewSet(
 	leader_board.NewHandler,
 	private_kvs.NewHandler,
 	session.NewHandler,
+	user.NewHandler,
 	echo.NewHandler,
 	New,
 )
@@ -30,6 +32,7 @@ func New(
 	leaderBoard apiconnect.LeaderBoardServiceHandler,
 	privateKVS apiconnect.PrivateKVSServiceHandler,
 	session apiconnect.SessionServiceHandler,
+	user apiconnect.UserServiceHandler,
 	echo debugconnect.EchoServiceHandler,
 ) *http.ServeMux {
 	opts := connect.WithInterceptors(interceptor.New()...)
@@ -38,6 +41,7 @@ func New(
 	mux.Handle(apiconnect.NewLeaderBoardServiceHandler(leaderBoard, opts))
 	mux.Handle(apiconnect.NewPrivateKVSServiceHandler(privateKVS, opts))
 	mux.Handle(apiconnect.NewSessionServiceHandler(session, opts))
+	mux.Handle(apiconnect.NewUserServiceHandler(user, opts))
 	if config.Get().GetDebug() {
 		mux.Handle(debugconnect.NewEchoServiceHandler(echo, opts))
 	}
