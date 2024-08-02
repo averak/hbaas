@@ -10,6 +10,7 @@ service UserService {
   rpc ActivateV1(UserServiceActivateV1Request) returns (UserServiceActivateV1Response) {
     option (custom_option.method_option) = {
       skip_authenticate: true
+      skip_user_status_check: true
       method_error_definitions: [
         {
           code: METHOD_RESOURCE_CONFLICT
@@ -25,6 +26,7 @@ service UserService {
   rpc EditProfileV1(UserServiceEditProfileV1Request) returns (UserServiceEditProfileV1Response) {
     option (custom_option.method_option) = {
       skip_authenticate: true
+      skip_user_status_check: true
       method_error_definitions: [
         {
           code: METHOD_ILLEGAL_ARGUMENT
@@ -37,7 +39,9 @@ service UserService {
 
   // 退会処理を行います。
   // アカウントは永続的に削除され、復元することはできません。
-  rpc AccountDeleteV1(UserServiceAccountDeleteV1Request) returns (UserServiceAccountDeleteV1Response);
+  rpc AccountDeleteV1(UserServiceAccountDeleteV1Request) returns (UserServiceAccountDeleteV1Response) {
+    option (custom_option.method_option) = {skip_user_status_check: true};
+  }
 }
 
 message UserServiceActivateV1Request {}

@@ -13,7 +13,6 @@ import (
 	"github.com/averak/hbaas/app/domain/repository/transaction"
 	"github.com/averak/hbaas/app/registry"
 	"github.com/averak/hbaas/protobuf/api"
-	"github.com/averak/hbaas/protobuf/api/api_errors"
 	"github.com/averak/hbaas/protobuf/api/apiconnect"
 	"github.com/averak/hbaas/testutils"
 	"github.com/averak/hbaas/testutils/bdd"
@@ -84,13 +83,23 @@ func Test_handler_AccountDeleteV1(t *testing.T) {
 					},
 				},
 				{
-					Name: "削除済みの場合 => エラー",
+					Name: "削除済みの場合 => 冪等に実行できる",
 					When: when{
 						req:    &api.UserServiceAccountDeleteV1Request{},
 						userID: faker.UUIDv5("USER_DEACTIVATED"),
 					},
 					Then: func(t *testing.T, got *connect.Response[api.UserServiceAccountDeleteV1Response], dto *dao.User, err error) {
-						testconnect.AssertErrorCode(t, api_errors.ErrorCode_COMMON_INVALID_USER_AVAILABILITY, err)
+						require.NoError(t, err)
+
+						wantDto := &dao.User{
+							ID:        faker.UUIDv5("USER_DEACTIVATED").String(),
+							Email:     "",
+							Status:    int(model.UserStatusDeactivated),
+							IsDeleted: true,
+						}
+						if diff := cmp.Diff(wantDto, dto, cmpopts.IgnoreFields(dao.User{}, "CreatedAt", "UpdatedAt")); diff != "" {
+							t.Errorf("(-want, +got)\n%s", diff)
+						}
 					},
 				},
 			},

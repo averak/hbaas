@@ -26,9 +26,6 @@ func checkSession(ctx context.Context, conf *config.Config, repo repository.User
 			if err != nil {
 				return nil, err
 			}
-			if user.IsUnavailable() {
-				return nil, error_response.New(api_errors.ErrorCode_COMMON_INVALID_USER_AVAILABILITY, api_errors.ErrorSeverity_ERROR_SEVERITY_WARNING, "user is not active")
-			}
 			return &user, nil
 		}
 	}
@@ -49,9 +46,6 @@ func checkSession(ctx context.Context, conf *config.Config, repo repository.User
 	})
 	if err != nil {
 		return nil, error_response.New(api_errors.ErrorCode_COMMON_INVALID_SESSION, api_errors.ErrorSeverity_ERROR_SEVERITY_WARNING, "failed to get user")
-	}
-	if user.IsUnavailable() {
-		return nil, error_response.New(api_errors.ErrorCode_COMMON_INVALID_USER_AVAILABILITY, api_errors.ErrorSeverity_ERROR_SEVERITY_WARNING, "user is not active")
 	}
 	return &user, nil
 }

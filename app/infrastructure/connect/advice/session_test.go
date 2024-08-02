@@ -153,18 +153,6 @@ func Test_checkSession(t *testing.T) {
 					},
 				},
 				{
-					Name: "セッショントークンが指定されている && ユーザが退会済み => エラー",
-					When: when{
-						incomingMD: mdval.NewIncomingMD(http.Header{
-							textproto.CanonicalMIMEHeaderKey(string(mdval.SessionTokenKey)): {sessionToken(faker.UUIDv5("u2"))},
-						}),
-						now: now,
-					},
-					Then: func(t *testing.T, got *model.User, err error) {
-						testconnect.AssertErrorCode(t, api_errors.ErrorCode_COMMON_INVALID_USER_AVAILABILITY, err)
-					},
-				},
-				{
 					Name: "セッショントークンが指定されている && ユーザが存在しない場合 => エラー",
 					When: when{
 						incomingMD: mdval.NewIncomingMD(http.Header{
