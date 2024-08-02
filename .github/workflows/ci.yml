@@ -23,7 +23,6 @@ jobs:
       - name: setup database
         run: |
           docker compose up -d
-          make db-migrate
 
       - name: test
         run: |
@@ -56,7 +55,6 @@ jobs:
       - name: setup database
         run: |
           docker compose up -d
-          make db-migrate
 
       - name: dependencies
         if: steps.cache-makefile.outputs.cache-hit != 'true'

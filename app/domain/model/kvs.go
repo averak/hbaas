@@ -46,7 +46,7 @@ func (m *PrivateKVSBucket) Set(etag uuid.UUID, entries []KVSEntry) error {
 	if m.etag != etag {
 		return ErrPrivateKVSETagMismatch
 	}
-	m.KVSBucket.Set(entries...)
+	m.KVSBucket.Set(entries)
 	m.etag = uuid.New()
 	return nil
 }
@@ -76,7 +76,7 @@ func (m KVSBucket) HasKey(key string) bool {
 	})
 }
 
-func (m *KVSBucket) Set(entries ...KVSEntry) {
+func (m *KVSBucket) Set(entries []KVSEntry) {
 	for _, e := range entries {
 		if m.HasKey(e.Key) {
 			for i := range m.raw {

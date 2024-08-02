@@ -1,0 +1,43 @@
+syntax = "proto3";
+package api;
+
+import "resource/leader_board.proto";
+
+// リーダーボード機能は、イベントごとにスコアを集計し、リアルタイムにランキングを計算します。
+// スコア計測対象はユーザに限らず、ブログ記事や商品など任意のエンティティを指定できます。
+//
+// ## リーダーボードのライフサイクル
+// リーダーボードは、一般的にはマスターデータや管理者ツールから作成されますが、本システムは SubmitScoreV1 でリーダーボードが存在しない場合に自動的に作成します。
+//
+// ## リーダーボードIDの命名規則
+// リーダーボードの検索機能は提供されないので、規則性を持つナチュラルキーを指定することを推奨します。
+// 以下のように、半永久的なイベントには静的な値を、期間限定のイベントには期間を含めると良いでしょう。
+//   - blog-ranking:all
+//   - blog-ranking:daily:2000-01-01
+//
+// ## スコア
+// スコアは、エンティティごとに一意です。エンティティが複数回スコアを提出した場合、最新のスコアが採用されます。
+// ユーザごとに複数スコアを登録したい場合は `user01:2000-01-01` のようなスコアIDを設計してください。
+service LeaderBoardService {
+  rpc GetV1(LeaderBoardServiceGetV1Request) returns (LeaderBoardServiceGetV1Response);
+  rpc SubmitScoreV1(LeaderBoardServiceSubmitScoreV1Request) returns (LeaderBoardServiceSubmitScoreV1Response);
+}
+
+message LeaderBoardServiceGetV1Request {
+  string leader_board_id = 1;
+}
+
+message LeaderBoardServiceGetV1Response {
+  resource.LeaderBoard leader_board = 1;
+}
+
+message LeaderBoardServiceSubmitScoreV1Request {
+  string leader_board_id = 1;
+  string score_id = 2;
+  // 負数も許容します。
+  int64 score = 3;
+}
+
+message LeaderBoardServiceSubmitScoreV1Response {
+  resource.LeaderBoard leader_board = 1;
+}

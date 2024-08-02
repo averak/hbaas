@@ -38,13 +38,17 @@ const (
 	// UserServiceEditProfileV1Procedure is the fully-qualified name of the UserService's EditProfileV1
 	// RPC.
 	UserServiceEditProfileV1Procedure = "/api.UserService/EditProfileV1"
+	// UserServiceAccountDeleteV1Procedure is the fully-qualified name of the UserService's
+	// AccountDeleteV1 RPC.
+	UserServiceAccountDeleteV1Procedure = "/api.UserService/AccountDeleteV1"
 )
 
 // These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
 var (
-	userServiceServiceDescriptor             = api.File_api_user_proto.Services().ByName("UserService")
-	userServiceActivateV1MethodDescriptor    = userServiceServiceDescriptor.Methods().ByName("ActivateV1")
-	userServiceEditProfileV1MethodDescriptor = userServiceServiceDescriptor.Methods().ByName("EditProfileV1")
+	userServiceServiceDescriptor               = api.File_api_user_proto.Services().ByName("UserService")
+	userServiceActivateV1MethodDescriptor      = userServiceServiceDescriptor.Methods().ByName("ActivateV1")
+	userServiceEditProfileV1MethodDescriptor   = userServiceServiceDescriptor.Methods().ByName("EditProfileV1")
+	userServiceAccountDeleteV1MethodDescriptor = userServiceServiceDescriptor.Methods().ByName("AccountDeleteV1")
 )
 
 // UserServiceClient is a client for the api.UserService service.
@@ -55,6 +59,9 @@ type UserServiceClient interface {
 	// プロフィール属性はプロダクトによって異なり、汎化が難いためバイナリデータとして扱います。
 	// プロダクトごとに、独自のスキーマを定義してください。
 	EditProfileV1(context.Context, *connect.Request[api.UserServiceEditProfileV1Request]) (*connect.Response[api.UserServiceEditProfileV1Response], error)
+	// 退会処理を行います。
+	// アカウントは永続的に削除され、復元することはできません。
+	AccountDeleteV1(context.Context, *connect.Request[api.UserServiceAccountDeleteV1Request]) (*connect.Response[api.UserServiceAccountDeleteV1Response], error)
 }
 
 // NewUserServiceClient constructs a client for the api.UserService service. By default, it uses the
@@ -79,13 +86,20 @@ func NewUserServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(userServiceEditProfileV1MethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
+		accountDeleteV1: connect.NewClient[api.UserServiceAccountDeleteV1Request, api.UserServiceAccountDeleteV1Response](
+			httpClient,
+			baseURL+UserServiceAccountDeleteV1Procedure,
+			connect.WithSchema(userServiceAccountDeleteV1MethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // userServiceClient implements UserServiceClient.
 type userServiceClient struct {
-	activateV1    *connect.Client[api.UserServiceActivateV1Request, api.UserServiceActivateV1Response]
-	editProfileV1 *connect.Client[api.UserServiceEditProfileV1Request, api.UserServiceEditProfileV1Response]
+	activateV1      *connect.Client[api.UserServiceActivateV1Request, api.UserServiceActivateV1Response]
+	editProfileV1   *connect.Client[api.UserServiceEditProfileV1Request, api.UserServiceEditProfileV1Response]
+	accountDeleteV1 *connect.Client[api.UserServiceAccountDeleteV1Request, api.UserServiceAccountDeleteV1Response]
 }
 
 // ActivateV1 calls api.UserService.ActivateV1.
@@ -98,6 +112,11 @@ func (c *userServiceClient) EditProfileV1(ctx context.Context, req *connect.Requ
 	return c.editProfileV1.CallUnary(ctx, req)
 }
 
+// AccountDeleteV1 calls api.UserService.AccountDeleteV1.
+func (c *userServiceClient) AccountDeleteV1(ctx context.Context, req *connect.Request[api.UserServiceAccountDeleteV1Request]) (*connect.Response[api.UserServiceAccountDeleteV1Response], error) {
+	return c.accountDeleteV1.CallUnary(ctx, req)
+}
+
 // UserServiceHandler is an implementation of the api.UserService service.
 type UserServiceHandler interface {
 	// プロフィール設定/言語設定などの初期設定が完了したら、この API を呼び出してください。
@@ -106,6 +125,9 @@ type UserServiceHandler interface {
 	// プロフィール属性はプロダクトによって異なり、汎化が難いためバイナリデータとして扱います。
 	// プロダクトごとに、独自のスキーマを定義してください。
 	EditProfileV1(context.Context, *connect.Request[api.UserServiceEditProfileV1Request]) (*connect.Response[api.UserServiceEditProfileV1Response], error)
+	// 退会処理を行います。
+	// アカウントは永続的に削除され、復元することはできません。
+	AccountDeleteV1(context.Context, *connect.Request[api.UserServiceAccountDeleteV1Request]) (*connect.Response[api.UserServiceAccountDeleteV1Response], error)
 }
 
 // NewUserServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -126,12 +148,20 @@ func NewUserServiceHandler(svc UserServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(userServiceEditProfileV1MethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
+	userServiceAccountDeleteV1Handler := connect.NewUnaryHandler(
+		UserServiceAccountDeleteV1Procedure,
+		svc.AccountDeleteV1,
+		connect.WithSchema(userServiceAccountDeleteV1MethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/api.UserService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case UserServiceActivateV1Procedure:
 			userServiceActivateV1Handler.ServeHTTP(w, r)
 		case UserServiceEditProfileV1Procedure:
 			userServiceEditProfileV1Handler.ServeHTTP(w, r)
+		case UserServiceAccountDeleteV1Procedure:
+			userServiceAccountDeleteV1Handler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -147,4 +177,8 @@ func (UnimplementedUserServiceHandler) ActivateV1(context.Context, *connect.Requ
 
 func (UnimplementedUserServiceHandler) EditProfileV1(context.Context, *connect.Request[api.UserServiceEditProfileV1Request]) (*connect.Response[api.UserServiceEditProfileV1Response], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.UserService.EditProfileV1 is not implemented"))
+}
+
+func (UnimplementedUserServiceHandler) AccountDeleteV1(context.Context, *connect.Request[api.UserServiceAccountDeleteV1Request]) (*connect.Response[api.UserServiceAccountDeleteV1Response], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.UserService.AccountDeleteV1 is not implemented"))
 }

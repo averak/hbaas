@@ -6,11 +6,19 @@ package dao
 var TableNames = struct {
 	Echos               string
 	GlobalKVSEntries    string
+	LeaderBoard         string
+	LeaderBoardScores   string
+	PrivateKVSEntries   string
+	PrivateKVSEtags     string
 	UserAuthentications string
 	Users               string
 }{
 	Echos:               "echos",
 	GlobalKVSEntries:    "global_kvs_entries",
+	LeaderBoard:         "leader_board",
+	LeaderBoardScores:   "leader_board_scores",
+	PrivateKVSEntries:   "private_kvs_entries",
+	PrivateKVSEtags:     "private_kvs_etags",
 	UserAuthentications: "user_authentications",
 	Users:               "users",
 }

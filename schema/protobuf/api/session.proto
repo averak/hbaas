@@ -1,12 +1,29 @@
 syntax = "proto3";
 package api;
 
+import "custom_option/custom_option.proto";
 import "google/protobuf/timestamp.proto";
 
 service SessionService {
   // ID トークンを検証し、セッションを作成します。
   // サインインとサインアップが統合されており、初回実行時はユーザ作成も同時に行います。
-  rpc AuthorizeV1(SessionServiceAuthorizeV1Request) returns (SessionServiceAuthorizeV1Response) {}
+  rpc AuthorizeV1(SessionServiceAuthorizeV1Request) returns (SessionServiceAuthorizeV1Response) {
+    option (custom_option.method_option) = {
+      skip_authenticate: true
+      method_error_definitions: [
+        {
+          code: METHOD_ILLEGAL_ARGUMENT
+          severity: ERROR_SEVERITY_WARNING
+          message: "ID token is invalid, please re-authenticate and try again."
+        },
+        {
+          code: METHOD_ID_TOKEN_EXPIRED
+          severity: ERROR_SEVERITY_WARNING
+          message: "ID token is expired, please re-authenticate and try again."
+        }
+      ]
+    };
+  }
 }
 
 message SessionServiceAuthorizeV1Request {

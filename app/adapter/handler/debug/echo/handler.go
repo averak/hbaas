@@ -3,8 +3,7 @@ package echo
 import (
 	"context"
 
-	"connectrpc.com/connect"
-	"github.com/averak/hbaas/app/core/ctxval"
+	"github.com/averak/hbaas/app/infrastructure/connect/advice"
 	"github.com/averak/hbaas/app/usecase/echo_usecase"
 	"github.com/averak/hbaas/protobuf/api/debug"
 	"github.com/averak/hbaas/protobuf/api/debug/debugconnect"
@@ -15,18 +14,17 @@ type handler struct {
 	uc *echo_usecase.Usecase
 }
 
-func NewHandler(uc *echo_usecase.Usecase) debugconnect.EchoServiceHandler {
-	return &handler{uc: uc}
+func NewHandler(uc *echo_usecase.Usecase, advice advice.Advice) debugconnect.EchoServiceHandler {
+	return debug.NewEchoServiceHandler(&handler{uc: uc}, advice)
 }
 
-func (h handler) EchoV1(ctx context.Context, c *connect.Request[debug.EchoServiceEchoV1Request]) (*connect.Response[debug.EchoServiceEchoV1Response], error) {
-	tctx, _ := ctxval.GetTransactionContext(ctx)
-	result, err := h.uc.Echo(ctx, tctx, c.Msg.GetMessage())
+func (h handler) EchoV1(ctx context.Context, req *advice.Request[*debug.EchoServiceEchoV1Request]) (*debug.EchoServiceEchoV1Response, error) {
+	result, err := h.uc.Echo(ctx, req.TransactionContext(), req.Msg().GetMessage())
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&debug.EchoServiceEchoV1Response{
+	return &debug.EchoServiceEchoV1Response{
 		Message:   result.Message,
 		Timestamp: timestamppb.New(result.Timestamp),
-	}), nil
+	}, nil
 }

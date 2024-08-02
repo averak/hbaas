@@ -1,15 +1,21 @@
 {
+  "debug": true,
   "google_cloud": {
     "project_id": "averak-hbaas-dev",
     "firebase": {
       "use_stub": true
+    },
+    "pubsub": {
+      "use_emulator": true
     },
     "trace": {
       "enabled": false
     }
   },
   "logging": {
-    "severity": "SEVERITY_DEBUG"
+    "severity": "SEVERITY_DEBUG",
+    "omit_request_body": false,
+    "omit_response_body": false
   },
   "postgres": {
     "host": "localhost",
@@ -18,26 +24,33 @@
     "password": "db",
     "database": "db"
   },
-  "cors": {
-    "allowed_origins": [
-      "*"
-    ],
-    "allowed_methods": [
-      "POST"
-    ],
-    "allowed_headers": [
-      "*"
-    ],
-    "expose_headers": [
-      "*"
-    ],
-    "max_age": 3600,
-    "allow_credentials": true
+  "api_server": {
+    "port": 8080,
+    "cors": {
+      "allowed_origins": [
+        "*"
+      ],
+      "allowed_methods": [
+        "POST"
+      ],
+      "allowed_headers": [
+        "*"
+      ],
+      "expose_headers": [
+        "*"
+      ],
+      "max_age": 3600,
+      "allow_credentials": true
+    },
+    "session": {
+      "expiration_seconds": 3600,
+      "secret_key": "********************************"
+    }
   },
-  "session": {
-    "expiration_seconds": 3600,
-    "secret_key": "********************************"
-  },
-  "debug": true,
-  "port": 8080
+  "async_worker": {
+    "pubsub_topic_id": "async-worker",
+    "pubsub_subscription_id": "async-worker",
+    "pull_interval_ms": 1000,
+    "timeout_ms": 10000
+  }
 }

@@ -13,11 +13,13 @@ import (
 	"github.com/averak/hbaas/app/adapter/repoimpl/user_repoimpl"
 	"github.com/averak/hbaas/app/adapter/usecaseimpl"
 	"github.com/averak/hbaas/app/core/config"
+	"github.com/averak/hbaas/app/infrastructure/connect/advice"
 	"github.com/averak/hbaas/app/infrastructure/connect/interceptor"
 	"github.com/averak/hbaas/app/infrastructure/google_cloud"
 	"github.com/averak/hbaas/app/infrastructure/session"
 	"github.com/averak/hbaas/app/usecase/session_usecase"
 	"github.com/averak/hbaas/protobuf/api"
+	"github.com/averak/hbaas/protobuf/api/api_errors"
 	"github.com/averak/hbaas/protobuf/api/apiconnect"
 	"github.com/averak/hbaas/testutils"
 	"github.com/averak/hbaas/testutils/bdd"
@@ -93,9 +95,9 @@ func Test_handler_AuthorizeV1(t *testing.T) {
 						wantSession := session.Session{
 							PrincipalID: faker.UUIDv5("u1"),
 							IssuedAt:    now,
-							ExpiresAt:   now.Add(time.Duration(config.Get().GetSession().GetExpirationSeconds()) * time.Second),
+							ExpiresAt:   now.Add(time.Duration(config.Get().GetApiServer().GetSession().GetExpirationSeconds()) * time.Second),
 						}
-						sess, err := session.DecodeSessionToken(got.Msg.GetSessionToken(), []byte(config.Get().GetSession().GetSecretKey()), time.Now())
+						sess, err := session.DecodeSessionToken(got.Msg.GetSessionToken(), []byte(config.Get().GetApiServer().GetSession().GetSecretKey()), time.Now())
 						if err != nil {
 							t.Fatal(err)
 						}
@@ -105,7 +107,7 @@ func Test_handler_AuthorizeV1(t *testing.T) {
 
 						want := &api.SessionServiceAuthorizeV1Response{
 							UserId:    faker.UUIDv5("u1").String(),
-							ExpiresAt: timestamppb.New(now.Add(time.Duration(config.Get().GetSession().GetExpirationSeconds()) * time.Second)),
+							ExpiresAt: timestamppb.New(now.Add(time.Duration(config.Get().GetApiServer().GetSession().GetExpirationSeconds()) * time.Second)),
 						}
 						if diff := cmp.Diff(want, got.Msg, cmpopts.IgnoreUnexported(api.SessionServiceAuthorizeV1Response{}, timestamppb.Timestamp{}), cmpopts.IgnoreFields(api.SessionServiceAuthorizeV1Response{}, "SessionToken")); diff != "" {
 							t.Errorf("(-want, +got)\n%s", diff)
@@ -121,8 +123,7 @@ func Test_handler_AuthorizeV1(t *testing.T) {
 						now: now,
 					},
 					Then: func(t *testing.T, got *connect.Response[api.SessionServiceAuthorizeV1Response], err error) {
-						// TODO: エラーコードを検証する
-						require.Error(t, err)
+						testconnect.AssertErrorCode(t, api_errors.ErrorCode_METHOD_ID_TOKEN_EXPIRED, err)
 					},
 				},
 				{
@@ -134,8 +135,7 @@ func Test_handler_AuthorizeV1(t *testing.T) {
 						now: now,
 					},
 					Then: func(t *testing.T, got *connect.Response[api.SessionServiceAuthorizeV1Response], err error) {
-						// TODO: エラーコードを検証する
-						require.Error(t, err)
+						testconnect.AssertErrorCode(t, api_errors.ErrorCode_METHOD_ILLEGAL_ARGUMENT, err)
 					},
 				},
 			},
@@ -157,9 +157,9 @@ func Test_handler_AuthorizeV1(t *testing.T) {
 
 						wantSession := session.Session{
 							IssuedAt:  now,
-							ExpiresAt: now.Add(time.Duration(config.Get().GetSession().GetExpirationSeconds()) * time.Second),
+							ExpiresAt: now.Add(time.Duration(config.Get().GetApiServer().GetSession().GetExpirationSeconds()) * time.Second),
 						}
-						sess, err := session.DecodeSessionToken(got.Msg.GetSessionToken(), []byte(config.Get().GetSession().GetSecretKey()), time.Now())
+						sess, err := session.DecodeSessionToken(got.Msg.GetSessionToken(), []byte(config.Get().GetApiServer().GetSession().GetSecretKey()), time.Now())
 						if err != nil {
 							t.Fatal(err)
 						}
@@ -169,7 +169,7 @@ func Test_handler_AuthorizeV1(t *testing.T) {
 
 						want := &api.SessionServiceAuthorizeV1Response{
 							UserId:    sess.PrincipalID.String(),
-							ExpiresAt: timestamppb.New(now.Add(time.Duration(config.Get().GetSession().GetExpirationSeconds()) * time.Second)),
+							ExpiresAt: timestamppb.New(now.Add(time.Duration(config.Get().GetApiServer().GetSession().GetExpirationSeconds()) * time.Second)),
 						}
 						if diff := cmp.Diff(want, got.Msg, cmpopts.IgnoreUnexported(api.SessionServiceAuthorizeV1Response{}, timestamppb.Timestamp{}), cmpopts.IgnoreFields(api.SessionServiceAuthorizeV1Response{}, "SessionToken")); diff != "" {
 							t.Errorf("(-want, +got)\n%s", diff)
@@ -199,7 +199,7 @@ func newMux(t *testing.T, baasCli google_cloud.FirebaseClient) *http.ServeMux {
 	opts := connect.WithInterceptors(interceptor.New()...)
 	mux := http.NewServeMux()
 	mux.Handle(apiconnect.NewSessionServiceHandler(
-		NewHandler(session_usecase.NewUsecase(conn, usecaseimpl.NewFirebaseIdentityVerifier(baasCli), authentication_repoimpl.NewRepository(), user_repoimpl.NewRepository())),
+		NewHandler(session_usecase.NewUsecase(conn, usecaseimpl.NewFirebaseIdentityVerifier(baasCli), authentication_repoimpl.NewRepository(), user_repoimpl.NewRepository()), advice.NewAdvice(conn, user_repoimpl.NewRepository())),
 		opts,
 	))
 	return mux

@@ -2,22 +2,26 @@ syntax = "proto3";
 package com.github.averak.hbaas.config;
 
 message Config {
-  GoogleCloud google_cloud = 1;
-  Logging logging = 2;
-  Postgres postgres = 3;
-  Cors cors = 4;
-  Session session = 5;
-  bool debug = 6;
-  int32 port = 7;
+  bool debug = 1;
+  GoogleCloud google_cloud = 2;
+  Logging logging = 3;
+  Postgres postgres = 4;
+  APIServer api_server = 5;
+  AsyncWorker async_worker = 6;
 }
 
 message GoogleCloud {
   string project_id = 1;
   Firebase firebase = 2;
-  Trace trace = 3;
+  PubSub pubsub = 3;
+  Trace trace = 4;
 
   message Firebase {
     bool use_stub = 1;
+  }
+
+  message PubSub {
+    bool use_emulator = 1;
   }
 
   message Trace {
@@ -28,6 +32,8 @@ message GoogleCloud {
 
 message Logging {
   Severity severity = 1;
+  bool omit_request_body = 2;
+  bool omit_response_body = 3;
 
   // Cloud Logging に定義された LogSeverity に対応する。
   // https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry#logseverity
@@ -52,17 +58,30 @@ message Postgres {
   string database = 5;
 }
 
-message Cors {
-  repeated string allowed_origins = 1;
-  repeated string allowed_methods = 2;
-  repeated string allowed_headers = 3;
-  repeated string expose_headers = 4;
-  int64 max_age = 5;
-  bool allow_credentials = 6;
+message APIServer {
+  int32 port = 1;
+  Cors cors = 2;
+  Session session = 3;
+
+  message Cors {
+    repeated string allowed_origins = 1;
+    repeated string allowed_methods = 2;
+    repeated string allowed_headers = 3;
+    repeated string expose_headers = 4;
+    int64 max_age = 5;
+    bool allow_credentials = 6;
+  }
+
+  message Session {
+    int64 expiration_seconds = 1;
+    // HMAC-SHA256 の秘密鍵 (32文字の文字列で指定する)
+    string secret_key = 2;
+  }
 }
 
-message Session {
-  int64 expiration_seconds = 1;
-  // HMAC-SHA256 の秘密鍵 (32文字の文字列で指定する)
-  string secret_key = 2;
+message AsyncWorker {
+  string pubsub_topic_id = 1;
+  string pubsub_subscription_id = 2;
+  int64 pull_interval_ms = 3;
+  int64 timeout_ms = 4;
 }

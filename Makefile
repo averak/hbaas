@@ -4,6 +4,7 @@ GO_LDFLAGS := -s -w -X github.com/averak/hbaas/app/core/build_info.serverVersion
 
 .PHONY: install-tools
 install-tools:
+	go install ./cmd/protoc-gen-hbaas-server
 	go install github.com/bufbuild/buf/cmd/buf@${BUF_VERSION}
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 	go install github.com/fdaines/arch-go@latest
@@ -29,7 +30,7 @@ lint:
 codegen:
 	find . -type f \( -name 'wire_gen.go' \) -delete
 	wire ./...
-	find . -type f \( -name '*.connect.go' -or -name '*.pb.go' \) -delete
+	find . -type f \( -name '*.connect.go' -or -name '*.pb.go' -or -name '*.hbaas.go' \) -delete
 	buf generate
 	sqlboiler psql --wipe --templates=templates/sqlboiler,$(shell go env GOPATH)/pkg/mod/github.com/volatiletech/sqlboiler/v4@${SQL_BOILER_VERSION}/templates/main
 
@@ -49,11 +50,19 @@ db-clean:
 	docker-compose up -d postgres
 
 .PHONY: build
-build: build-api-server
+build: build-api-server build-async-worker build-batch-job
 
 .PHONE: build-api-server
 build-api-server:
 	CGO_ENABLED=0 go build -ldflags="$(GO_LDFLAGS)" -o tmp/build/api_server ./entrypoint/api_server
+
+.PHONY: build-async-worker
+build-async-worker:
+	CGO_ENABLED=0 go build -ldflags="$(GO_LDFLAGS)" -o tmp/build/async_worker ./entrypoint/async_worker
+
+.PHONY: build-batch-job
+build-batch-job:
+	CGO_ENABLED=0 go build -ldflags="$(GO_LDFLAGS)" -o tmp/build/batch_job ./entrypoint/batch_job
 
 .PHONY: run-api-server
 run-api-server:

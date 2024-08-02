@@ -4,6 +4,7 @@ import "github.com/averak/hbaas/app/domain/model"
 
 type Data struct {
 	GlobalKVSBucket *model.GlobalKVSBucket
+	LeaderBoard     []*model.LeaderBoard
 }
 
 type SystemBuilder struct {
@@ -20,5 +21,10 @@ func (b SystemBuilder) Build() Data {
 
 func (b *SystemBuilder) GlobalKVSBucket(v model.GlobalKVSBucket) *SystemBuilder {
 	b.data.GlobalKVSBucket = &v
+	return b
+}
+
+func (b *SystemBuilder) LeaderBoard(v model.LeaderBoard) *SystemBuilder {
+	b.data.LeaderBoard = append(b.data.LeaderBoard, &v)
 	return b
 }

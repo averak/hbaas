@@ -63,3 +63,37 @@ func TestUser_Activate(t *testing.T) {
 		})
 	}
 }
+
+func TestUser_IsUnavailable(t *testing.T) {
+	type fields struct {
+		Status UserStatus
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   bool
+	}{
+		{
+			name: "Deactivated の場合 => true",
+			fields: fields{
+				Status: UserStatusDeactivated,
+			},
+			want: true,
+		},
+		{
+			name: "Deactivated 以外の場合 => false",
+			fields: fields{
+				Status: UserStatusPending,
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			u := User{
+				Status: tt.fields.Status,
+			}
+			assert.Equalf(t, tt.want, u.IsUnavailable(), "IsUnavailable()")
+		})
+	}
+}
