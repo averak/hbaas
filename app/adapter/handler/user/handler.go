@@ -22,11 +22,16 @@ func NewHandler(uc *user_usecase.Usecase, advice advice.Advice) apiconnect.UserS
 }
 
 func (h handler) ActivateV1(ctx context.Context, req *advice.Request[*api.UserServiceActivateV1Request]) (*api.UserServiceActivateV1Response, error) {
-	//TODO implement me
-	panic("implement me")
+	user, _ := req.Principal()
+	err := h.uc.Activate(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+	return &api.UserServiceActivateV1Response{}, nil
 }
 
 func (h handler) ActivateV1Errors(errs *api.UserServiceActivateV1Errors) {
+	errs.Map(model.ErrUserDeactivated, errs.RESOURCE_CONFLICT)
 }
 
 func (h handler) SearchProfilesV1(ctx context.Context, req *advice.Request[*api.UserServiceSearchProfilesV1Request]) (*api.UserServiceSearchProfilesV1Response, error) {
