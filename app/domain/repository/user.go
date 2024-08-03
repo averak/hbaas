@@ -15,5 +15,6 @@ var (
 
 type UserRepository interface {
 	Get(ctx context.Context, tx transaction.Transaction, userID uuid.UUID) (model.User, error)
+	GetByUserIDs(ctx context.Context, tx transaction.Transaction, userIDs []uuid.UUID) ([]model.User, error)
 	Save(ctx context.Context, tx transaction.Transaction, user model.User) error
 }

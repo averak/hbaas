@@ -3,11 +3,14 @@ package user
 import (
 	"context"
 
+	"github.com/averak/hbaas/app/adapter/pbconv"
 	"github.com/averak/hbaas/app/domain/model"
 	"github.com/averak/hbaas/app/infrastructure/connect/advice"
 	"github.com/averak/hbaas/app/usecase/user_usecase"
+	"github.com/averak/hbaas/pkg/vector"
 	"github.com/averak/hbaas/protobuf/api"
 	"github.com/averak/hbaas/protobuf/api/apiconnect"
+	"github.com/google/uuid"
 )
 
 type handler struct {
@@ -24,6 +27,24 @@ func (h handler) ActivateV1(ctx context.Context, req *advice.Request[*api.UserSe
 }
 
 func (h handler) ActivateV1Errors(errs *api.UserServiceActivateV1Errors) {
+}
+
+func (h handler) SearchProfilesV1(ctx context.Context, req *advice.Request[*api.UserServiceSearchProfilesV1Request]) (*api.UserServiceSearchProfilesV1Response, error) {
+	userIDs := make([]uuid.UUID, 0, len(req.Msg().GetUserIds()))
+	for _, id := range req.Msg().GetUserIds() {
+		userID, err := uuid.Parse(id)
+		if err != nil {
+			return nil, err
+		}
+		userIDs = append(userIDs, userID)
+	}
+	result, err := h.uc.SearchProfiles(ctx, userIDs)
+	if err != nil {
+		return nil, err
+	}
+	return &api.UserServiceSearchProfilesV1Response{
+		Profiles: vector.Map(result, pbconv.ToProfilePb),
+	}, nil
 }
 
 func (h handler) EditProfileV1(ctx context.Context, req *advice.Request[*api.UserServiceEditProfileV1Request]) (*api.UserServiceEditProfileV1Response, error) {

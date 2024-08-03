@@ -14,6 +14,7 @@ import (
 	"github.com/averak/hbaas/app/registry"
 	"github.com/averak/hbaas/protobuf/api"
 	"github.com/averak/hbaas/protobuf/api/apiconnect"
+	"github.com/averak/hbaas/protobuf/resource"
 	"github.com/averak/hbaas/testutils"
 	"github.com/averak/hbaas/testutils/bdd"
 	"github.com/averak/hbaas/testutils/faker"
@@ -24,8 +25,89 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func Test_handler_SearchProfilesV1(t *testing.T) {
+	mux, err := registry.InitializeAPIServerMux(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := httptest.NewServer(mux)
+	defer server.Close()
+
+	type given struct {
+		userData []user_builder.Data
+	}
+	type when struct {
+		req    *api.UserServiceSearchProfilesV1Request
+		userID uuid.UUID
+	}
+	type then = func(*testing.T, *connect.Response[api.UserServiceSearchProfilesV1Response], error)
+	tests := []bdd.Testcase[given, when, then]{
+		{
+			Given: given{
+				userData: []user_builder.Data{
+					user_builder.New(faker.UUIDv5("u1")).
+						Status(model.UserStatusActive).
+						Profile(user_builder.NewUserProfile(faker.UUIDv5("u1")).Raw([]byte("v1")).Build()).
+						Build(),
+					user_builder.New(faker.UUIDv5("u2")).
+						Status(model.UserStatusPending).
+						Profile(user_builder.NewUserProfile(faker.UUIDv5("u2")).Raw([]byte("v2")).Build()).
+						Build(),
+					user_builder.New(faker.UUIDv5("u3")).
+						Status(model.UserStatusDeactivated).
+						Profile(user_builder.NewUserProfile(faker.UUIDv5("u3")).Raw([]byte("v3")).Build()).
+						Build(),
+				},
+			},
+			Behaviors: []bdd.Behavior[when, then]{
+				{
+					Name: "プロフィールを編集できる",
+					When: when{
+						req: &api.UserServiceSearchProfilesV1Request{
+							UserIds: []string{
+								faker.UUIDv5("u1").String(),
+								faker.UUIDv5("u2").String(),
+								faker.UUIDv5("u3").String(),
+								faker.UUIDv5("not_exists").String(),
+							},
+						},
+						userID: faker.UUIDv5("u1"),
+					},
+					Then: func(t *testing.T, got *connect.Response[api.UserServiceSearchProfilesV1Response], err error) {
+						require.NoError(t, err)
+
+						want := &api.UserServiceSearchProfilesV1Response{
+							Profiles: []*resource.UserProfile{
+								{
+									UserId: faker.UUIDv5("u1").String(),
+									Data:   []byte("v1"),
+								},
+							},
+						}
+						assert.EqualExportedValues(t, want, got.Msg)
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		tt.Run(t, func(t *testing.T, given given, when when, then then) {
+			defer testutils.Teardown(t)
+			userup.Setup(t, context.Background(), given.userData...)
+
+			got, err := testconnect.MethodInvoke(
+				apiconnect.NewUserServiceClient(http.DefaultClient, server.URL).SearchProfilesV1,
+				when.req,
+				testconnect.WithSession(t, when.userID),
+			)
+			then(t, got, err)
+		})
+	}
+}
 
 func Test_handler_EditProfileV1(t *testing.T) {
 	mux, err := registry.InitializeAPIServerMux(context.Background())
@@ -42,7 +124,6 @@ func Test_handler_EditProfileV1(t *testing.T) {
 		req    *api.UserServiceEditProfileV1Request
 		userID uuid.UUID
 	}
-	// TODO: User.SearchProfileV1 で、更新後のプロフィールを検証する
 	type then = func(*testing.T, *connect.Response[api.UserServiceEditProfileV1Response], error)
 	tests := []bdd.Testcase[given, when, then]{
 		{

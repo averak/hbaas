@@ -78,7 +78,92 @@ func TestRepository_Get(t *testing.T) {
 			if !tt.wantErr(t, err) {
 				return
 			}
-			assert.EqualExportedValues(t, tt.want, got)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestRepository_GetByUserIDs(t *testing.T) {
+	conn := testutils.MustDBConn(t)
+
+	type args struct {
+		userIDs []uuid.UUID
+	}
+	tests := []struct {
+		name    string
+		seeds   []fixture.Seed
+		args    args
+		want    []model.User
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			name: "ユーザIDで検索できる",
+			seeds: []fixture.Seed{
+				&dao.User{
+					ID:     faker.UUIDv5("u1").String(),
+					Email:  "e1",
+					Status: int(model.UserStatusActive),
+				},
+				&dao.User{
+					ID:     faker.UUIDv5("u2").String(),
+					Email:  "e2",
+					Status: int(model.UserStatusPending),
+				},
+				&dao.User{
+					ID:     faker.UUIDv5("u3").String(),
+					Email:  "e3",
+					Status: int(model.UserStatusActive),
+				},
+			},
+			args: args{
+				userIDs: []uuid.UUID{
+					faker.UUIDv5("u1"),
+					faker.UUIDv5("u2"),
+					faker.UUIDv5("not_exists"),
+				},
+			},
+			want: []model.User{
+				{
+					ID:     faker.UUIDv5("u1"),
+					Email:  "e1",
+					Status: model.UserStatusActive,
+				},
+				{
+					ID:     faker.UUIDv5("u2"),
+					Email:  "e2",
+					Status: model.UserStatusPending,
+				},
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "ユーザIDリストが空 => 空リストを返す",
+			args: args{
+				userIDs: []uuid.UUID{},
+			},
+			want:    []model.User{},
+			wantErr: assert.NoError,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fixture.SetupSeeds(t, context.Background(), tt.seeds...)
+			defer testutils.Teardown(t)
+
+			var got []model.User
+			err := conn.BeginRoTransaction(context.Background(), func(ctx context.Context, tx transaction.Transaction) error {
+				r := Repository{}
+				var err error
+				got, err = r.GetByUserIDs(ctx, tx, tt.args.userIDs)
+				if err != nil {
+					return err
+				}
+				return nil
+			})
+			if !tt.wantErr(t, err) {
+				return
+			}
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }

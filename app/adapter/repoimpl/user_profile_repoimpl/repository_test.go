@@ -80,6 +80,94 @@ func TestRepository_Get(t *testing.T) {
 	}
 }
 
+func TestRepository_GetByUserIDs(t *testing.T) {
+	conn := testutils.MustDBConn(t)
+
+	type args struct {
+		userIDs []uuid.UUID
+	}
+	tests := []struct {
+		name    string
+		seeds   []fixture.Seed
+		args    args
+		want    []model.UserProfile
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			name: "ユーザIDで検索できる",
+			seeds: []fixture.Seed{
+				&dao.User{
+					ID:    faker.UUIDv5("u1").String(),
+					Email: faker.Email(),
+				},
+				&dao.UserProfile{
+					UserID:  faker.UUIDv5("u1").String(),
+					Content: []byte("v1"),
+				},
+				&dao.User{
+					ID:    faker.UUIDv5("u2").String(),
+					Email: faker.Email(),
+				},
+				&dao.UserProfile{
+					UserID:  faker.UUIDv5("u2").String(),
+					Content: []byte("v2"),
+				},
+				&dao.User{
+					ID:    faker.UUIDv5("u3").String(),
+					Email: faker.Email(),
+				},
+				&dao.UserProfile{
+					UserID:  faker.UUIDv5("u3").String(),
+					Content: []byte("v3"),
+				},
+			},
+			args: args{
+				userIDs: []uuid.UUID{
+					faker.UUIDv5("u1"),
+					faker.UUIDv5("u2"),
+
+					// 存在しないユーザは無視される
+					faker.UUIDv5("not_exists"),
+				},
+			},
+			want: []model.UserProfile{
+				mustUserProfile(t, faker.UUIDv5("u1"), []byte("v1")),
+				mustUserProfile(t, faker.UUIDv5("u2"), []byte("v2")),
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "ユーザIDリストが空 => 空リストを返す",
+			args: args{
+				userIDs: []uuid.UUID{},
+			},
+			want:    []model.UserProfile{},
+			wantErr: assert.NoError,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fixture.SetupSeeds(t, context.Background(), tt.seeds...)
+			defer testutils.Teardown(t)
+
+			var got []model.UserProfile
+			err := conn.BeginRoTransaction(context.Background(), func(ctx context.Context, tx transaction.Transaction) error {
+				r := Repository{}
+				var err error
+				got, err = r.GetByUserIDs(ctx, tx, tt.args.userIDs)
+				if err != nil {
+					return err
+				}
+				return nil
+			})
+			if !tt.wantErr(t, err) {
+				return
+			}
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
 func TestRepository_Save(t *testing.T) {
 	conn := testutils.MustDBConn(t)
 
