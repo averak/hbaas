@@ -9,7 +9,6 @@ service UserService {
   // ユーザがアクティベートされるまで、ユーザのプロフィールは非公開になります。
   rpc ActivateV1(UserServiceActivateV1Request) returns (UserServiceActivateV1Response) {
     option (custom_option.method_option) = {
-      skip_authenticate: true
       skip_user_status_check: true
       method_error_definitions: [
         {
