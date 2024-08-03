@@ -56,7 +56,7 @@ func Test_handler_EditProfileV1(t *testing.T) {
 			},
 			Behaviors: []bdd.Behavior[when, then]{
 				{
-					Name: "プロフィールを更新できる",
+					Name: "プロフィールを編集できる",
 					When: when{
 						req: &api.UserServiceEditProfileV1Request{
 							Data: []byte("v2"),
@@ -78,7 +78,7 @@ func Test_handler_EditProfileV1(t *testing.T) {
 			},
 			Behaviors: []bdd.Behavior[when, then]{
 				{
-					Name: "プロフィールを更新できる",
+					Name: "プロフィールを編集できる",
 					When: when{
 						req: &api.UserServiceEditProfileV1Request{
 							Data: []byte("v1"),
