@@ -26,6 +26,16 @@ CREATE TABLE "user_authentications"
 );
 CREATE UNIQUE INDEX "uq__user_authentications__baas_user_id" ON "user_authentications" ("baas_user_id");
 
+CREATE TABLE "user_profiles"
+(
+    "user_id"    UUID      NOT NULL,
+    "content"    BYTEA     NOT NULL,
+    "created_at" TIMESTAMP NOT NULL,
+    "updated_at" TIMESTAMP NOT NULL,
+    PRIMARY KEY ("user_id"),
+    CONSTRAINT "fk__user_profiles__user_id" FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE CASCADE
+);
+
 CREATE TABLE "private_kvs_entries"
 (
     "user_id"    UUID         NOT NULL,

@@ -9,6 +9,7 @@ import (
 
 type Data struct {
 	User             model.User
+	Profile          *model.UserProfile
 	Authentication   *model.UserAuthentication
 	PrivateKVSBucket *model.PrivateKVSBucket
 }
@@ -31,6 +32,11 @@ func (b UserBuilder) Build() Data {
 
 func (b *UserBuilder) Status(v model.UserStatus) *UserBuilder {
 	b.data.User.Status = v
+	return b
+}
+
+func (b *UserBuilder) Profile(v model.UserProfile) *UserBuilder {
+	b.data.Profile = &v
 	return b
 }
 

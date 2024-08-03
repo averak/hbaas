@@ -27,23 +27,29 @@ type hbaas_LobbyServiceHandler interface {
 
 	CreateRoomV1(ctx context.Context, req *advice.Request[*LobbyServiceCreateRoomV1Request]) (*LobbyServiceCreateRoomV1Response, error)
 
+	EditRoomV1(ctx context.Context, req *advice.Request[*LobbyServiceEditRoomV1Request]) (*LobbyServiceEditRoomV1Response, error)
+
 	DeleteRoomV1(ctx context.Context, req *advice.Request[*LobbyServiceDeleteRoomV1Request]) (*LobbyServiceDeleteRoomV1Response, error)
 
 	JoinRoomV1(ctx context.Context, req *advice.Request[*LobbyServiceJoinRoomV1Request]) (*LobbyServiceJoinRoomV1Response, error)
+
+	LeaveRoomV1(ctx context.Context, req *advice.Request[*LobbyServiceLeaveRoomV1Request]) (*LobbyServiceLeaveRoomV1Response, error)
 }
 
 func NewLobbyServiceHandler(handler hbaas_LobbyServiceHandler, adv advice.Advice) hbaas_LobbyServiceHandlerImpl {
 	service := File_api_lobby_proto.Services().ByName("LobbyService")
-	causes := [4]map[error]*advice.MethodErrDefinition{{}, {}, {}, {}}
-	methodOpts := [4]*advice.MethodOption{}
-	for i, m := 0, service.Methods(); i < 4; i++ {
+	causes := [6]map[error]*advice.MethodErrDefinition{{}, {}, {}, {}, {}, {}}
+	methodOpts := [6]*advice.MethodOption{}
+	for i, m := 0, service.Methods(); i < 6; i++ {
 		methodOpts[i] = proto.GetExtension(m.Get(i).Options(), custom_option.E_MethodOption).(*advice.MethodOption)
 	}
-	methodInfo := [4]*advice.MethodInfo{
+	methodInfo := [6]*advice.MethodInfo{
 		advice.NewMethodInfo(methodOpts[0], causes[0]),
 		advice.NewMethodInfo(methodOpts[1], causes[1]),
 		advice.NewMethodInfo(methodOpts[2], causes[2]),
 		advice.NewMethodInfo(methodOpts[3], causes[3]),
+		advice.NewMethodInfo(methodOpts[4], causes[4]),
+		advice.NewMethodInfo(methodOpts[5], causes[5]),
 	}
 	return hbaas_LobbyServiceHandlerImpl{handler: handler, advice: adv, methodInfo: methodInfo}
 }
@@ -51,7 +57,7 @@ func NewLobbyServiceHandler(handler hbaas_LobbyServiceHandler, adv advice.Advice
 type hbaas_LobbyServiceHandlerImpl struct {
 	handler    hbaas_LobbyServiceHandler
 	advice     advice.Advice
-	methodInfo [4]*advice.MethodInfo
+	methodInfo [6]*advice.MethodInfo
 }
 
 func (h hbaas_LobbyServiceHandlerImpl) SearchRoomsV1(ctx context.Context, req *connect.Request[LobbyServiceSearchRoomsV1Request]) (*connect.Response[LobbyServiceSearchRoomsV1Response], error) {
@@ -70,8 +76,16 @@ func (h hbaas_LobbyServiceHandlerImpl) CreateRoomV1(ctx context.Context, req *co
 	return connect.NewResponse(res), nil
 }
 
+func (h hbaas_LobbyServiceHandlerImpl) EditRoomV1(ctx context.Context, req *connect.Request[LobbyServiceEditRoomV1Request]) (*connect.Response[LobbyServiceEditRoomV1Response], error) {
+	res, err := connect1.Execute(ctx, req.Msg, req.Header(), h.methodInfo[2], h.handler.EditRoomV1, h.advice)
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(res), nil
+}
+
 func (h hbaas_LobbyServiceHandlerImpl) DeleteRoomV1(ctx context.Context, req *connect.Request[LobbyServiceDeleteRoomV1Request]) (*connect.Response[LobbyServiceDeleteRoomV1Response], error) {
-	res, err := connect1.Execute(ctx, req.Msg, req.Header(), h.methodInfo[2], h.handler.DeleteRoomV1, h.advice)
+	res, err := connect1.Execute(ctx, req.Msg, req.Header(), h.methodInfo[3], h.handler.DeleteRoomV1, h.advice)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +93,15 @@ func (h hbaas_LobbyServiceHandlerImpl) DeleteRoomV1(ctx context.Context, req *co
 }
 
 func (h hbaas_LobbyServiceHandlerImpl) JoinRoomV1(ctx context.Context, req *connect.Request[LobbyServiceJoinRoomV1Request]) (*connect.Response[LobbyServiceJoinRoomV1Response], error) {
-	res, err := connect1.Execute(ctx, req.Msg, req.Header(), h.methodInfo[3], h.handler.JoinRoomV1, h.advice)
+	res, err := connect1.Execute(ctx, req.Msg, req.Header(), h.methodInfo[4], h.handler.JoinRoomV1, h.advice)
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(res), nil
+}
+
+func (h hbaas_LobbyServiceHandlerImpl) LeaveRoomV1(ctx context.Context, req *connect.Request[LobbyServiceLeaveRoomV1Request]) (*connect.Response[LobbyServiceLeaveRoomV1Response], error) {
+	res, err := connect1.Execute(ctx, req.Msg, req.Header(), h.methodInfo[5], h.handler.LeaveRoomV1, h.advice)
 	if err != nil {
 		return nil, err
 	}

@@ -25,7 +25,6 @@ service UserService {
   // プロダクトごとに、独自のスキーマを定義してください。
   rpc EditProfileV1(UserServiceEditProfileV1Request) returns (UserServiceEditProfileV1Response) {
     option (custom_option.method_option) = {
-      skip_authenticate: true
       skip_user_status_check: true
       method_error_definitions: [
         {
@@ -49,7 +48,8 @@ message UserServiceActivateV1Request {}
 message UserServiceActivateV1Response {}
 
 message UserServiceEditProfileV1Request {
-  resource.UserProfile profile = 1;
+  resource.UserProfile profile = 1 [deprecated = true];
+  bytes data = 2;
 }
 
 message UserServiceEditProfileV1Response {}

@@ -21,6 +21,7 @@ import (
 	"github.com/averak/hbaas/app/adapter/repoimpl/global_kvs_repoimpl"
 	"github.com/averak/hbaas/app/adapter/repoimpl/leader_board_repoimpl"
 	"github.com/averak/hbaas/app/adapter/repoimpl/private_kvs_repoimpl"
+	"github.com/averak/hbaas/app/adapter/repoimpl/user_profile_repoimpl"
 	"github.com/averak/hbaas/app/adapter/repoimpl/user_repoimpl"
 	"github.com/averak/hbaas/app/adapter/usecaseimpl"
 	"github.com/averak/hbaas/app/core/config"
@@ -65,12 +66,13 @@ func InitializeAPIServerMux(ctx context.Context) (*http.ServeMux, error) {
 	authenticationRepository := authentication_repoimpl.NewRepository()
 	session_usecaseUsecase := session_usecase.NewUsecase(connection, identityVerifier, authenticationRepository, userRepository)
 	sessionServiceHandler := session.NewHandler(session_usecaseUsecase, adviceAdvice)
+	userProfileRepository := user_profile_repoimpl.NewRepository()
 	client, err := google_cloud.NewPubSubClient(ctx)
 	if err != nil {
 		return nil, err
 	}
 	baasUserDeletionTaskQueue := usecaseimpl.NewBaasUserDeletionTaskQueue(client)
-	user_usecaseUsecase := user_usecase.NewUsecase(connection, authenticationRepository, userRepository, baasUserDeletionTaskQueue)
+	user_usecaseUsecase := user_usecase.NewUsecase(connection, authenticationRepository, userRepository, userProfileRepository, baasUserDeletionTaskQueue)
 	userServiceHandler := user.NewHandler(user_usecaseUsecase, adviceAdvice)
 	echoRepository := echo_repoimpl.NewRepository()
 	echo_usecaseUsecase := echo_usecase.NewUsecase(connection, echoRepository)

@@ -16,8 +16,10 @@ import "resource/lobby.proto";
 service LobbyService {
   rpc SearchRoomsV1(LobbyServiceSearchRoomsV1Request) returns (LobbyServiceSearchRoomsV1Response);
   rpc CreateRoomV1(LobbyServiceCreateRoomV1Request) returns (LobbyServiceCreateRoomV1Response);
+  rpc EditRoomV1(LobbyServiceEditRoomV1Request) returns (LobbyServiceEditRoomV1Response);
   rpc DeleteRoomV1(LobbyServiceDeleteRoomV1Request) returns (LobbyServiceDeleteRoomV1Response);
   rpc JoinRoomV1(LobbyServiceJoinRoomV1Request) returns (LobbyServiceJoinRoomV1Response);
+  rpc LeaveRoomV1(LobbyServiceLeaveRoomV1Request) returns (LobbyServiceLeaveRoomV1Response);
 }
 
 message LobbyServiceSearchRoomsV1Request {
@@ -39,6 +41,17 @@ message LobbyServiceCreateRoomV1Response {
   resource.Room room = 1;
 }
 
+message LobbyServiceEditRoomV1Request {
+  string room_id = 1;
+  int64 max_capacity = 2;
+  string secret = 3;
+  bytes details = 4;
+}
+
+message LobbyServiceEditRoomV1Response {
+  resource.Room room = 1;
+}
+
 message LobbyServiceDeleteRoomV1Request {
   string room_id = 1;
 }
@@ -55,3 +68,9 @@ message LobbyServiceJoinRoomV1Response {
   string skyway_auth_token = 1;
   string peer_id = 2;
 }
+
+message LobbyServiceLeaveRoomV1Request {
+  string room_id = 1;
+}
+
+message LobbyServiceLeaveRoomV1Response {}
