@@ -27,6 +27,86 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func Test_handler_EditProfileV1(t *testing.T) {
+	mux, err := registry.InitializeAPIServerMux(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := httptest.NewServer(mux)
+	defer server.Close()
+
+	type given struct {
+		userData []user_builder.Data
+	}
+	type when struct {
+		req    *api.UserServiceEditProfileV1Request
+		userID uuid.UUID
+	}
+	// TODO: User.SearchProfileV1 で、更新後のプロフィールを検証する
+	type then = func(*testing.T, *connect.Response[api.UserServiceEditProfileV1Response], error)
+	tests := []bdd.Testcase[given, when, then]{
+		{
+			Name: "プロフィールが存在する状態で",
+			Given: given{
+				userData: []user_builder.Data{
+					user_builder.New(faker.UUIDv5("u1")).
+						Profile(user_builder.NewUserProfile(faker.UUIDv5("u1")).Raw([]byte("v1")).Build()).
+						Build(),
+				},
+			},
+			Behaviors: []bdd.Behavior[when, then]{
+				{
+					Name: "プロフィールを更新できる",
+					When: when{
+						req: &api.UserServiceEditProfileV1Request{
+							Data: []byte("v2"),
+						},
+						userID: faker.UUIDv5("u1"),
+					},
+					Then: func(t *testing.T, got *connect.Response[api.UserServiceEditProfileV1Response], err error) {
+						require.NoError(t, err)
+					},
+				},
+			},
+		},
+		{
+			Name: "プロフィールが存在しない状態で",
+			Given: given{
+				userData: []user_builder.Data{
+					user_builder.New(faker.UUIDv5("u1")).Build(),
+				},
+			},
+			Behaviors: []bdd.Behavior[when, then]{
+				{
+					Name: "プロフィールを更新できる",
+					When: when{
+						req: &api.UserServiceEditProfileV1Request{
+							Data: []byte("v1"),
+						},
+						userID: faker.UUIDv5("u1"),
+					},
+					Then: func(t *testing.T, got *connect.Response[api.UserServiceEditProfileV1Response], err error) {
+						require.NoError(t, err)
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		tt.Run(t, func(t *testing.T, given given, when when, then then) {
+			defer testutils.Teardown(t)
+			userup.Setup(t, context.Background(), given.userData...)
+
+			got, err := testconnect.MethodInvoke(
+				apiconnect.NewUserServiceClient(http.DefaultClient, server.URL).EditProfileV1,
+				when.req,
+				testconnect.WithSession(t, when.userID),
+			)
+			then(t, got, err)
+		})
+	}
+}
+
 func Test_handler_AccountDeleteV1(t *testing.T) {
 	testgoogle_cloud.CreateTopic(t, context.Background(), config.Get().GetAsyncWorker().GetPubsubTopicId())
 	defer testgoogle_cloud.DeleteTopic(t, context.Background(), config.Get().GetAsyncWorker().GetPubsubTopicId())

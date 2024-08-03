@@ -11,6 +11,7 @@ var TableNames = struct {
 	PrivateKVSEntries   string
 	PrivateKVSEtags     string
 	UserAuthentications string
+	UserProfiles        string
 	Users               string
 }{
 	Echos:               "echos",
@@ -20,5 +21,6 @@ var TableNames = struct {
 	PrivateKVSEntries:   "private_kvs_entries",
 	PrivateKVSEtags:     "private_kvs_etags",
 	UserAuthentications: "user_authentications",
+	UserProfiles:        "user_profiles",
 	Users:               "users",
 }

@@ -97,10 +97,12 @@ var UserWhere = struct {
 var UserRels = struct {
 	PrivateKVSEtag     string
 	UserAuthentication string
+	UserProfile        string
 	PrivateKVSEntries  string
 }{
 	PrivateKVSEtag:     "PrivateKVSEtag",
 	UserAuthentication: "UserAuthentication",
+	UserProfile:        "UserProfile",
 	PrivateKVSEntries:  "PrivateKVSEntries",
 }
 
@@ -108,6 +110,7 @@ var UserRels = struct {
 type userR struct {
 	PrivateKVSEtag     *PrivateKVSEtag      `boil:"PrivateKVSEtag" json:"PrivateKVSEtag" toml:"PrivateKVSEtag" yaml:"PrivateKVSEtag"`
 	UserAuthentication *UserAuthentication  `boil:"UserAuthentication" json:"UserAuthentication" toml:"UserAuthentication" yaml:"UserAuthentication"`
+	UserProfile        *UserProfile         `boil:"UserProfile" json:"UserProfile" toml:"UserProfile" yaml:"UserProfile"`
 	PrivateKVSEntries  PrivateKVSEntrySlice `boil:"PrivateKVSEntries" json:"PrivateKVSEntries" toml:"PrivateKVSEntries" yaml:"PrivateKVSEntries"`
 }
 
@@ -128,6 +131,13 @@ func (r *userR) GetUserAuthentication() *UserAuthentication {
 		return nil
 	}
 	return r.UserAuthentication
+}
+
+func (r *userR) GetUserProfile() *UserProfile {
+	if r == nil {
+		return nil
+	}
+	return r.UserProfile
 }
 
 func (r *userR) GetPrivateKVSEntries() PrivateKVSEntrySlice {
@@ -475,6 +485,17 @@ func (o *User) UserAuthentication(mods ...qm.QueryMod) userAuthenticationQuery {
 	return UserAuthentications(queryMods...)
 }
 
+// UserProfile pointed to by the foreign key.
+func (o *User) UserProfile(mods ...qm.QueryMod) userProfileQuery {
+	queryMods := []qm.QueryMod{
+		qm.Where("\"user_id\" = ?", o.ID),
+	}
+
+	queryMods = append(queryMods, mods...)
+
+	return UserProfiles(queryMods...)
+}
+
 // PrivateKVSEntries retrieves all the private_kvs_entry's PrivateKVSEntries with an executor.
 func (o *User) PrivateKVSEntries(mods ...qm.QueryMod) privateKVSEntryQuery {
 	var queryMods []qm.QueryMod
@@ -723,6 +744,123 @@ func (userL) LoadUserAuthentication(ctx context.Context, e boil.ContextExecutor,
 	return nil
 }
 
+// LoadUserProfile allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-1 relationship.
+func (userL) LoadUserProfile(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+	var slice []*User
+	var object *User
+
+	if singular {
+		var ok bool
+		object, ok = maybeUser.(*User)
+		if !ok {
+			object = new(User)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUser))
+			}
+		}
+	} else {
+		s, ok := maybeUser.(*[]*User)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUser))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &userR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userR{}
+			}
+
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`user_profiles`),
+		qm.WhereIn(`user_profiles.user_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load UserProfile")
+	}
+
+	var resultSlice []*UserProfile
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice UserProfile")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results of eager load for user_profiles")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for user_profiles")
+	}
+
+	if len(userProfileAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+
+	if len(resultSlice) == 0 {
+		return nil
+	}
+
+	if singular {
+		foreign := resultSlice[0]
+		object.R.UserProfile = foreign
+		if foreign.R == nil {
+			foreign.R = &userProfileR{}
+		}
+		foreign.R.User = object
+	}
+
+	for _, local := range slice {
+		for _, foreign := range resultSlice {
+			if local.ID == foreign.UserID {
+				local.R.UserProfile = foreign
+				if foreign.R == nil {
+					foreign.R = &userProfileR{}
+				}
+				foreign.R.User = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
 // LoadPrivateKVSEntries allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for a 1-M or N-M relationship.
 func (userL) LoadPrivateKVSEntries(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
@@ -928,6 +1066,56 @@ func (o *User) SetUserAuthentication(ctx context.Context, exec boil.ContextExecu
 
 	if related.R == nil {
 		related.R = &userAuthenticationR{
+			User: o,
+		}
+	} else {
+		related.R.User = o
+	}
+	return nil
+}
+
+// SetUserProfile of the user to the related item.
+// Sets o.R.UserProfile to related.
+// Adds o to related.R.User.
+func (o *User) SetUserProfile(ctx context.Context, exec boil.ContextExecutor, insert bool, related *UserProfile) error {
+	var err error
+
+	if insert {
+		related.UserID = o.ID
+
+		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
+			return errors.Wrap(err, "failed to insert into foreign table")
+		}
+	} else {
+		updateQuery := fmt.Sprintf(
+			"UPDATE \"user_profiles\" SET %s WHERE %s",
+			strmangle.SetParamNames("\"", "\"", 1, []string{"user_id"}),
+			strmangle.WhereClause("\"", "\"", 2, userProfilePrimaryKeyColumns),
+		)
+		values := []interface{}{o.ID, related.UserID}
+
+		if boil.IsDebug(ctx) {
+			writer := boil.DebugWriterFrom(ctx)
+			fmt.Fprintln(writer, updateQuery)
+			fmt.Fprintln(writer, values)
+		}
+		if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+			return errors.Wrap(err, "failed to update foreign table")
+		}
+
+		related.UserID = o.ID
+	}
+
+	if o.R == nil {
+		o.R = &userR{
+			UserProfile: related,
+		}
+	} else {
+		o.R.UserProfile = related
+	}
+
+	if related.R == nil {
+		related.R = &userProfileR{
 			User: o,
 		}
 	} else {
