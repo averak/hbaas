@@ -10,6 +10,7 @@ import (
 	"github.com/averak/hbaas/app/domain/repository"
 	"github.com/averak/hbaas/app/domain/repository/transaction"
 	"github.com/averak/hbaas/app/infrastructure/trace"
+	"github.com/averak/hbaas/pkg/vector"
 	"github.com/google/uuid"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
@@ -32,6 +33,23 @@ func (r Repository) Get(ctx context.Context, tx transaction.Transaction, userID 
 		return model.User{}, err
 	}
 	return model.NewUser(uuid.MustParse(dto.ID), dto.Email, model.UserStatus(dto.Status)), nil
+}
+
+func (r Repository) GetByUserIDs(ctx context.Context, tx transaction.Transaction, userIDs []uuid.UUID) ([]model.User, error) {
+	ctx, span := trace.StartSpan(ctx, "user_repoimpl.GetByUserIDs")
+	defer span.End()
+
+	dtos, err := dao.Users(dao.UserWhere.ID.IN(vector.Map(userIDs, func(userID uuid.UUID) string { return userID.String() }))).All(ctx, tx)
+	if err != nil {
+		return nil, err
+	}
+
+	res := make([]model.User, 0, len(dtos))
+	for _, dto := range dtos {
+		user := model.NewUser(uuid.MustParse(dto.ID), dto.Email, model.UserStatus(dto.Status))
+		res = append(res, user)
+	}
+	return res, nil
 }
 
 func (r Repository) Save(ctx context.Context, tx transaction.Transaction, user model.User) error {

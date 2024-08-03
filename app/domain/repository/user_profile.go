@@ -10,5 +10,6 @@ import (
 
 type UserProfileRepository interface {
 	Get(ctx context.Context, tx transaction.Transaction, userID uuid.UUID) (model.UserProfile, error)
+	GetByUserIDs(ctx context.Context, tx transaction.Transaction, userIDs []uuid.UUID) ([]model.UserProfile, error)
 	Save(ctx context.Context, tx transaction.Transaction, profile model.UserProfile) error
 }
