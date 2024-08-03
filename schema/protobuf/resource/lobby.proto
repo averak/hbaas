@@ -1,0 +1,17 @@
+syntax = "proto3";
+package resource;
+
+message Room {
+  string room_id = 1;
+  string owner_user_id = 2;
+  RoomType type = 3;
+  int64 max_capacity = 4;
+  string secret = 5;
+  bytes details = 6;
+}
+
+enum RoomType {
+  ROOM_TYPE_UNSPECIFIED = 0;
+  ROOM_TYPE_PRIVATE = 1;
+  ROOM_TYPE_PUBLIC = 2;
+}
