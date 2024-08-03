@@ -39,11 +39,16 @@ const (
 	// LobbyServiceCreateRoomV1Procedure is the fully-qualified name of the LobbyService's CreateRoomV1
 	// RPC.
 	LobbyServiceCreateRoomV1Procedure = "/api.LobbyService/CreateRoomV1"
+	// LobbyServiceEditRoomV1Procedure is the fully-qualified name of the LobbyService's EditRoomV1 RPC.
+	LobbyServiceEditRoomV1Procedure = "/api.LobbyService/EditRoomV1"
 	// LobbyServiceDeleteRoomV1Procedure is the fully-qualified name of the LobbyService's DeleteRoomV1
 	// RPC.
 	LobbyServiceDeleteRoomV1Procedure = "/api.LobbyService/DeleteRoomV1"
 	// LobbyServiceJoinRoomV1Procedure is the fully-qualified name of the LobbyService's JoinRoomV1 RPC.
 	LobbyServiceJoinRoomV1Procedure = "/api.LobbyService/JoinRoomV1"
+	// LobbyServiceLeaveRoomV1Procedure is the fully-qualified name of the LobbyService's LeaveRoomV1
+	// RPC.
+	LobbyServiceLeaveRoomV1Procedure = "/api.LobbyService/LeaveRoomV1"
 )
 
 // These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
@@ -51,16 +56,20 @@ var (
 	lobbyServiceServiceDescriptor             = api.File_api_lobby_proto.Services().ByName("LobbyService")
 	lobbyServiceSearchRoomsV1MethodDescriptor = lobbyServiceServiceDescriptor.Methods().ByName("SearchRoomsV1")
 	lobbyServiceCreateRoomV1MethodDescriptor  = lobbyServiceServiceDescriptor.Methods().ByName("CreateRoomV1")
+	lobbyServiceEditRoomV1MethodDescriptor    = lobbyServiceServiceDescriptor.Methods().ByName("EditRoomV1")
 	lobbyServiceDeleteRoomV1MethodDescriptor  = lobbyServiceServiceDescriptor.Methods().ByName("DeleteRoomV1")
 	lobbyServiceJoinRoomV1MethodDescriptor    = lobbyServiceServiceDescriptor.Methods().ByName("JoinRoomV1")
+	lobbyServiceLeaveRoomV1MethodDescriptor   = lobbyServiceServiceDescriptor.Methods().ByName("LeaveRoomV1")
 )
 
 // LobbyServiceClient is a client for the api.LobbyService service.
 type LobbyServiceClient interface {
 	SearchRoomsV1(context.Context, *connect.Request[api.LobbyServiceSearchRoomsV1Request]) (*connect.Response[api.LobbyServiceSearchRoomsV1Response], error)
 	CreateRoomV1(context.Context, *connect.Request[api.LobbyServiceCreateRoomV1Request]) (*connect.Response[api.LobbyServiceCreateRoomV1Response], error)
+	EditRoomV1(context.Context, *connect.Request[api.LobbyServiceEditRoomV1Request]) (*connect.Response[api.LobbyServiceEditRoomV1Response], error)
 	DeleteRoomV1(context.Context, *connect.Request[api.LobbyServiceDeleteRoomV1Request]) (*connect.Response[api.LobbyServiceDeleteRoomV1Response], error)
 	JoinRoomV1(context.Context, *connect.Request[api.LobbyServiceJoinRoomV1Request]) (*connect.Response[api.LobbyServiceJoinRoomV1Response], error)
+	LeaveRoomV1(context.Context, *connect.Request[api.LobbyServiceLeaveRoomV1Request]) (*connect.Response[api.LobbyServiceLeaveRoomV1Response], error)
 }
 
 // NewLobbyServiceClient constructs a client for the api.LobbyService service. By default, it uses
@@ -85,6 +94,12 @@ func NewLobbyServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(lobbyServiceCreateRoomV1MethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
+		editRoomV1: connect.NewClient[api.LobbyServiceEditRoomV1Request, api.LobbyServiceEditRoomV1Response](
+			httpClient,
+			baseURL+LobbyServiceEditRoomV1Procedure,
+			connect.WithSchema(lobbyServiceEditRoomV1MethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
 		deleteRoomV1: connect.NewClient[api.LobbyServiceDeleteRoomV1Request, api.LobbyServiceDeleteRoomV1Response](
 			httpClient,
 			baseURL+LobbyServiceDeleteRoomV1Procedure,
@@ -97,6 +112,12 @@ func NewLobbyServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(lobbyServiceJoinRoomV1MethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
+		leaveRoomV1: connect.NewClient[api.LobbyServiceLeaveRoomV1Request, api.LobbyServiceLeaveRoomV1Response](
+			httpClient,
+			baseURL+LobbyServiceLeaveRoomV1Procedure,
+			connect.WithSchema(lobbyServiceLeaveRoomV1MethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -104,8 +125,10 @@ func NewLobbyServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 type lobbyServiceClient struct {
 	searchRoomsV1 *connect.Client[api.LobbyServiceSearchRoomsV1Request, api.LobbyServiceSearchRoomsV1Response]
 	createRoomV1  *connect.Client[api.LobbyServiceCreateRoomV1Request, api.LobbyServiceCreateRoomV1Response]
+	editRoomV1    *connect.Client[api.LobbyServiceEditRoomV1Request, api.LobbyServiceEditRoomV1Response]
 	deleteRoomV1  *connect.Client[api.LobbyServiceDeleteRoomV1Request, api.LobbyServiceDeleteRoomV1Response]
 	joinRoomV1    *connect.Client[api.LobbyServiceJoinRoomV1Request, api.LobbyServiceJoinRoomV1Response]
+	leaveRoomV1   *connect.Client[api.LobbyServiceLeaveRoomV1Request, api.LobbyServiceLeaveRoomV1Response]
 }
 
 // SearchRoomsV1 calls api.LobbyService.SearchRoomsV1.
@@ -118,6 +141,11 @@ func (c *lobbyServiceClient) CreateRoomV1(ctx context.Context, req *connect.Requ
 	return c.createRoomV1.CallUnary(ctx, req)
 }
 
+// EditRoomV1 calls api.LobbyService.EditRoomV1.
+func (c *lobbyServiceClient) EditRoomV1(ctx context.Context, req *connect.Request[api.LobbyServiceEditRoomV1Request]) (*connect.Response[api.LobbyServiceEditRoomV1Response], error) {
+	return c.editRoomV1.CallUnary(ctx, req)
+}
+
 // DeleteRoomV1 calls api.LobbyService.DeleteRoomV1.
 func (c *lobbyServiceClient) DeleteRoomV1(ctx context.Context, req *connect.Request[api.LobbyServiceDeleteRoomV1Request]) (*connect.Response[api.LobbyServiceDeleteRoomV1Response], error) {
 	return c.deleteRoomV1.CallUnary(ctx, req)
@@ -128,12 +156,19 @@ func (c *lobbyServiceClient) JoinRoomV1(ctx context.Context, req *connect.Reques
 	return c.joinRoomV1.CallUnary(ctx, req)
 }
 
+// LeaveRoomV1 calls api.LobbyService.LeaveRoomV1.
+func (c *lobbyServiceClient) LeaveRoomV1(ctx context.Context, req *connect.Request[api.LobbyServiceLeaveRoomV1Request]) (*connect.Response[api.LobbyServiceLeaveRoomV1Response], error) {
+	return c.leaveRoomV1.CallUnary(ctx, req)
+}
+
 // LobbyServiceHandler is an implementation of the api.LobbyService service.
 type LobbyServiceHandler interface {
 	SearchRoomsV1(context.Context, *connect.Request[api.LobbyServiceSearchRoomsV1Request]) (*connect.Response[api.LobbyServiceSearchRoomsV1Response], error)
 	CreateRoomV1(context.Context, *connect.Request[api.LobbyServiceCreateRoomV1Request]) (*connect.Response[api.LobbyServiceCreateRoomV1Response], error)
+	EditRoomV1(context.Context, *connect.Request[api.LobbyServiceEditRoomV1Request]) (*connect.Response[api.LobbyServiceEditRoomV1Response], error)
 	DeleteRoomV1(context.Context, *connect.Request[api.LobbyServiceDeleteRoomV1Request]) (*connect.Response[api.LobbyServiceDeleteRoomV1Response], error)
 	JoinRoomV1(context.Context, *connect.Request[api.LobbyServiceJoinRoomV1Request]) (*connect.Response[api.LobbyServiceJoinRoomV1Response], error)
+	LeaveRoomV1(context.Context, *connect.Request[api.LobbyServiceLeaveRoomV1Request]) (*connect.Response[api.LobbyServiceLeaveRoomV1Response], error)
 }
 
 // NewLobbyServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -154,6 +189,12 @@ func NewLobbyServiceHandler(svc LobbyServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(lobbyServiceCreateRoomV1MethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
+	lobbyServiceEditRoomV1Handler := connect.NewUnaryHandler(
+		LobbyServiceEditRoomV1Procedure,
+		svc.EditRoomV1,
+		connect.WithSchema(lobbyServiceEditRoomV1MethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
 	lobbyServiceDeleteRoomV1Handler := connect.NewUnaryHandler(
 		LobbyServiceDeleteRoomV1Procedure,
 		svc.DeleteRoomV1,
@@ -166,16 +207,26 @@ func NewLobbyServiceHandler(svc LobbyServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(lobbyServiceJoinRoomV1MethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
+	lobbyServiceLeaveRoomV1Handler := connect.NewUnaryHandler(
+		LobbyServiceLeaveRoomV1Procedure,
+		svc.LeaveRoomV1,
+		connect.WithSchema(lobbyServiceLeaveRoomV1MethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/api.LobbyService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case LobbyServiceSearchRoomsV1Procedure:
 			lobbyServiceSearchRoomsV1Handler.ServeHTTP(w, r)
 		case LobbyServiceCreateRoomV1Procedure:
 			lobbyServiceCreateRoomV1Handler.ServeHTTP(w, r)
+		case LobbyServiceEditRoomV1Procedure:
+			lobbyServiceEditRoomV1Handler.ServeHTTP(w, r)
 		case LobbyServiceDeleteRoomV1Procedure:
 			lobbyServiceDeleteRoomV1Handler.ServeHTTP(w, r)
 		case LobbyServiceJoinRoomV1Procedure:
 			lobbyServiceJoinRoomV1Handler.ServeHTTP(w, r)
+		case LobbyServiceLeaveRoomV1Procedure:
+			lobbyServiceLeaveRoomV1Handler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -193,10 +244,18 @@ func (UnimplementedLobbyServiceHandler) CreateRoomV1(context.Context, *connect.R
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.LobbyService.CreateRoomV1 is not implemented"))
 }
 
+func (UnimplementedLobbyServiceHandler) EditRoomV1(context.Context, *connect.Request[api.LobbyServiceEditRoomV1Request]) (*connect.Response[api.LobbyServiceEditRoomV1Response], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.LobbyService.EditRoomV1 is not implemented"))
+}
+
 func (UnimplementedLobbyServiceHandler) DeleteRoomV1(context.Context, *connect.Request[api.LobbyServiceDeleteRoomV1Request]) (*connect.Response[api.LobbyServiceDeleteRoomV1Response], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.LobbyService.DeleteRoomV1 is not implemented"))
 }
 
 func (UnimplementedLobbyServiceHandler) JoinRoomV1(context.Context, *connect.Request[api.LobbyServiceJoinRoomV1Request]) (*connect.Response[api.LobbyServiceJoinRoomV1Response], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.LobbyService.JoinRoomV1 is not implemented"))
+}
+
+func (UnimplementedLobbyServiceHandler) LeaveRoomV1(context.Context, *connect.Request[api.LobbyServiceLeaveRoomV1Request]) (*connect.Response[api.LobbyServiceLeaveRoomV1Response], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.LobbyService.LeaveRoomV1 is not implemented"))
 }
