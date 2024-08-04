@@ -90,6 +90,31 @@ CREATE TABLE "leader_board_scores"
     CONSTRAINT "fk__leader_board_scores__leader_board_id" FOREIGN KEY ("leader_board_id") REFERENCES "leader_board" ("id") ON DELETE CASCADE
 );
 
+CREATE TABLE "rooms"
+(
+    "id"            UUID         NOT NULL,
+    "owner_user_id" UUID         NOT NULL,
+    "type"          INTEGER      NOT NULL,
+    "max_capacity"  INTEGER      NOT NULL,
+    "secret"        VARCHAR(255) NOT NULL,
+    "details"       BYTEA        NOT NULL,
+    "created_at"    TIMESTAMP    NOT NULL,
+    "updated_at"    TIMESTAMP    NOT NULL,
+    PRIMARY KEY ("id"),
+    CONSTRAINT "fk__rooms__owner_user_id" FOREIGN KEY ("owner_user_id") REFERENCES "users" ("id") ON DELETE CASCADE
+);
+
+CREATE TABLE "room_users"
+(
+    "room_id"    UUID      NOT NULL,
+    "user_id"    UUID      NOT NULL,
+    "created_at" TIMESTAMP NOT NULL,
+    "updated_at" TIMESTAMP NOT NULL,
+    PRIMARY KEY ("room_id", "user_id"),
+    CONSTRAINT "fk__room_users__room_id" FOREIGN KEY ("room_id") REFERENCES "rooms" ("id") ON DELETE CASCADE,
+    CONSTRAINT "fk__room_users__user_id" FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE CASCADE
+);
+
 CREATE TABLE "echos"
 (
     "id"         UUID         NOT NULL,

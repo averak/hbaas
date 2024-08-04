@@ -99,11 +99,15 @@ var UserRels = struct {
 	UserAuthentication string
 	UserProfile        string
 	PrivateKVSEntries  string
+	RoomUsers          string
+	OwnerUserRooms     string
 }{
 	PrivateKVSEtag:     "PrivateKVSEtag",
 	UserAuthentication: "UserAuthentication",
 	UserProfile:        "UserProfile",
 	PrivateKVSEntries:  "PrivateKVSEntries",
+	RoomUsers:          "RoomUsers",
+	OwnerUserRooms:     "OwnerUserRooms",
 }
 
 // userR is where relationships are stored.
@@ -112,6 +116,8 @@ type userR struct {
 	UserAuthentication *UserAuthentication  `boil:"UserAuthentication" json:"UserAuthentication" toml:"UserAuthentication" yaml:"UserAuthentication"`
 	UserProfile        *UserProfile         `boil:"UserProfile" json:"UserProfile" toml:"UserProfile" yaml:"UserProfile"`
 	PrivateKVSEntries  PrivateKVSEntrySlice `boil:"PrivateKVSEntries" json:"PrivateKVSEntries" toml:"PrivateKVSEntries" yaml:"PrivateKVSEntries"`
+	RoomUsers          RoomUserSlice        `boil:"RoomUsers" json:"RoomUsers" toml:"RoomUsers" yaml:"RoomUsers"`
+	OwnerUserRooms     RoomSlice            `boil:"OwnerUserRooms" json:"OwnerUserRooms" toml:"OwnerUserRooms" yaml:"OwnerUserRooms"`
 }
 
 // NewStruct creates a new relationship struct
@@ -145,6 +151,20 @@ func (r *userR) GetPrivateKVSEntries() PrivateKVSEntrySlice {
 		return nil
 	}
 	return r.PrivateKVSEntries
+}
+
+func (r *userR) GetRoomUsers() RoomUserSlice {
+	if r == nil {
+		return nil
+	}
+	return r.RoomUsers
+}
+
+func (r *userR) GetOwnerUserRooms() RoomSlice {
+	if r == nil {
+		return nil
+	}
+	return r.OwnerUserRooms
 }
 
 // userL is where Load methods for each relationship are stored.
@@ -508,6 +528,34 @@ func (o *User) PrivateKVSEntries(mods ...qm.QueryMod) privateKVSEntryQuery {
 	)
 
 	return PrivateKVSEntries(queryMods...)
+}
+
+// RoomUsers retrieves all the room_user's RoomUsers with an executor.
+func (o *User) RoomUsers(mods ...qm.QueryMod) roomUserQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"room_users\".\"user_id\"=?", o.ID),
+	)
+
+	return RoomUsers(queryMods...)
+}
+
+// OwnerUserRooms retrieves all the room's Rooms with an executor via owner_user_id column.
+func (o *User) OwnerUserRooms(mods ...qm.QueryMod) roomQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"rooms\".\"owner_user_id\"=?", o.ID),
+	)
+
+	return Rooms(queryMods...)
 }
 
 // LoadPrivateKVSEtag allows an eager lookup of values, cached into the
@@ -974,6 +1022,232 @@ func (userL) LoadPrivateKVSEntries(ctx context.Context, e boil.ContextExecutor, 
 	return nil
 }
 
+// LoadRoomUsers allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (userL) LoadRoomUsers(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+	var slice []*User
+	var object *User
+
+	if singular {
+		var ok bool
+		object, ok = maybeUser.(*User)
+		if !ok {
+			object = new(User)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUser))
+			}
+		}
+	} else {
+		s, ok := maybeUser.(*[]*User)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUser))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &userR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`room_users`),
+		qm.WhereIn(`room_users.user_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load room_users")
+	}
+
+	var resultSlice []*RoomUser
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice room_users")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on room_users")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for room_users")
+	}
+
+	if len(roomUserAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.RoomUsers = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &roomUserR{}
+			}
+			foreign.R.User = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.UserID {
+				local.R.RoomUsers = append(local.R.RoomUsers, foreign)
+				if foreign.R == nil {
+					foreign.R = &roomUserR{}
+				}
+				foreign.R.User = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadOwnerUserRooms allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (userL) LoadOwnerUserRooms(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+	var slice []*User
+	var object *User
+
+	if singular {
+		var ok bool
+		object, ok = maybeUser.(*User)
+		if !ok {
+			object = new(User)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUser))
+			}
+		}
+	} else {
+		s, ok := maybeUser.(*[]*User)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUser))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &userR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`rooms`),
+		qm.WhereIn(`rooms.owner_user_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load rooms")
+	}
+
+	var resultSlice []*Room
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice rooms")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on rooms")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for rooms")
+	}
+
+	if len(roomAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.OwnerUserRooms = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &roomR{}
+			}
+			foreign.R.OwnerUser = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.OwnerUserID {
+				local.R.OwnerUserRooms = append(local.R.OwnerUserRooms, foreign)
+				if foreign.R == nil {
+					foreign.R = &roomR{}
+				}
+				foreign.R.OwnerUser = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
 // SetPrivateKVSEtag of the user to the related item.
 // Sets o.R.PrivateKVSEtag to related.
 // Adds o to related.R.User.
@@ -1172,6 +1446,112 @@ func (o *User) AddPrivateKVSEntries(ctx context.Context, exec boil.ContextExecut
 			}
 		} else {
 			rel.R.User = o
+		}
+	}
+	return nil
+}
+
+// AddRoomUsers adds the given related objects to the existing relationships
+// of the user, optionally inserting them as new records.
+// Appends related to o.R.RoomUsers.
+// Sets related.R.User appropriately.
+func (o *User) AddRoomUsers(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*RoomUser) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.UserID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"room_users\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"user_id"}),
+				strmangle.WhereClause("\"", "\"", 2, roomUserPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.RoomID, rel.UserID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.UserID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &userR{
+			RoomUsers: related,
+		}
+	} else {
+		o.R.RoomUsers = append(o.R.RoomUsers, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &roomUserR{
+				User: o,
+			}
+		} else {
+			rel.R.User = o
+		}
+	}
+	return nil
+}
+
+// AddOwnerUserRooms adds the given related objects to the existing relationships
+// of the user, optionally inserting them as new records.
+// Appends related to o.R.OwnerUserRooms.
+// Sets related.R.OwnerUser appropriately.
+func (o *User) AddOwnerUserRooms(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Room) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.OwnerUserID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"rooms\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"owner_user_id"}),
+				strmangle.WhereClause("\"", "\"", 2, roomPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.OwnerUserID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &userR{
+			OwnerUserRooms: related,
+		}
+	} else {
+		o.R.OwnerUserRooms = append(o.R.OwnerUserRooms, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &roomR{
+				OwnerUser: o,
+			}
+		} else {
+			rel.R.OwnerUser = o
 		}
 	}
 	return nil
