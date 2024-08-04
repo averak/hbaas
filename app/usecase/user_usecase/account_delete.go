@@ -24,6 +24,8 @@ func (u Usecase) AccountDelete(ctx context.Context, user model.User) error {
 			return fmt.Errorf("authRepo.Get failed, %w", err)
 		}
 
+		// TODO: ユーザに紐づくのリソースを削除する。
+
 		err = retry.Do(ctx, func() error {
 			err = u.baasUserDeletionTaskQ.Enqueue(ctx, auth)
 			if err != nil {
