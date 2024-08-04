@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	ErrorRoomNotFound = errors.New("room not found")
+	ErrRoomNotFound = errors.New("room not found")
 )
 
 type RoomRepository interface {
