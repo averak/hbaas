@@ -16,6 +16,7 @@ We provide SDKs for various platforms such as Web, iOS, and Android.
 - Leader Board
 - Key-Value Store
 - File Storage
+- Master Data Management
 - And more...
 
 ## Getting Started
