@@ -115,6 +115,18 @@ CREATE TABLE "room_users"
     CONSTRAINT "fk__room_users__user_id" FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE CASCADE
 );
 
+CREATE TABLE "master_data"
+(
+    "revision"   INTEGER      NOT NULL,
+    "content"    BYTEA        NOT NULL,
+    "is_active"  BOOLEAN      NOT NULL,
+    "comment"    VARCHAR(255) NOT NULL,
+    "created_at" TIMESTAMP    NOT NULL,
+    "updated_at" TIMESTAMP    NOT NULL,
+    PRIMARY KEY ("revision")
+);
+CREATE UNIQUE INDEX "uq__master_data__is_active" ON master_data ("is_active") WHERE "is_active" = TRUE;
+
 CREATE TABLE "echos"
 (
     "id"         UUID         NOT NULL,

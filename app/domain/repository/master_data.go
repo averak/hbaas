@@ -9,12 +9,13 @@ import (
 )
 
 var (
-	ErrMasterDataNotFound = errors.New("master data not found")
+	ErrMasterDataNotFound       = errors.New("master data not found")
+	ErrActiveMasterDataNotFound = errors.New("active master data not found")
 )
 
 type MasterDataRepository interface {
 	Get(ctx context.Context, tx transaction.Transaction, revision int) (model.MasterData, error)
-	GetRevisions(ctx context.Context, tx transaction.Transaction) ([]int, error)
 	GetActive(ctx context.Context, tx transaction.Transaction) (model.MasterData, error)
-	Save(ctx context.Context, tx transaction.Transaction, masterData model.MasterData) error
+	GetRevisions(ctx context.Context, tx transaction.Transaction) ([]int, error)
+	Save(ctx context.Context, tx transaction.Transaction, data ...model.MasterData) error
 }
