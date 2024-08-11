@@ -1,0 +1,45 @@
+syntax = "proto3";
+package api;
+
+import "custom_option/custom_option.proto";
+import "resource/master_data.proto";
+
+service MasterDataService {
+  // 現在アクティブなマスターデータを取得します。
+  rpc GetV1(MasterDataServiceGetV1Request) returns (MasterDataServiceGetV1Response) {
+    option (custom_option.method_option) = {
+      method_error_definitions: [
+        {
+          code: METHOD_RESOURCE_NOT_FOUND
+          severity: ERROR_SEVERITY_WARNING
+          message: "The active master data is not found."
+        }
+      ]
+    };
+  }
+
+  // 現在アクティブなマスターリビジョンを取得します。
+  rpc GetRevisionV1(MasterDataServiceGetRevisionV1Request) returns (MasterDataServiceGetRevisionV1Response) {
+    option (custom_option.method_option) = {
+      method_error_definitions: [
+        {
+          code: METHOD_RESOURCE_NOT_FOUND
+          severity: ERROR_SEVERITY_WARNING
+          message: "The active revision is not found."
+        }
+      ]
+    };
+  }
+}
+
+message MasterDataServiceGetV1Request {}
+
+message MasterDataServiceGetV1Response {
+  resource.MasterData master_data = 1;
+}
+
+message MasterDataServiceGetRevisionV1Request {}
+
+message MasterDataServiceGetRevisionV1Response {
+  int64 revision = 1;
+}
