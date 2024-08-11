@@ -13,6 +13,7 @@ type Usecase struct {
 
 	authRepo              repository.AuthenticationRepository
 	userRepo              repository.UserRepository
+	userProfileRepo       repository.UserProfileRepository
 	baasUserDeletionTaskQ BaasUserDeletionTaskQueue
 }
 
@@ -20,11 +21,13 @@ func NewUsecase(
 	conn transaction.Connection,
 	authRepo repository.AuthenticationRepository,
 	userRepo repository.UserRepository,
+	userProfileRepo repository.UserProfileRepository,
 	baasUserDeletionTaskQ BaasUserDeletionTaskQueue,
 ) *Usecase {
 	return &Usecase{
 		conn:                  conn,
 		userRepo:              userRepo,
+		userProfileRepo:       userProfileRepo,
 		authRepo:              authRepo,
 		baasUserDeletionTaskQ: baasUserDeletionTaskQ,
 	}

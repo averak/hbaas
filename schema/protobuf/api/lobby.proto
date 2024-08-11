@@ -1,0 +1,76 @@
+syntax = "proto3";
+package api;
+
+import "resource/lobby.proto";
+
+// ロビー機能は、WebRTC を利用したリアルタイム通信のためのルームを提供します。
+// リアルタイム通信は SkyWay で行いますが、SkyWay に接続する前段の認証、アクセス制御、その他メタデータ管理を行います。
+//
+// ## SkyWay
+// アプリケーションに WebRTC を組み込むためには、SkyWay SDK が必要になります。
+// https://skyway.ntt.com/ja/docs/
+//
+// ## ルーム
+// HBaaS のルームは、SkyWay のルームと1:1の関係にあります。
+// ただし、それぞれ別のID体系を持ち、異なる概念であることに注意してください。
+service LobbyService {
+  rpc SearchRoomsV1(LobbyServiceSearchRoomsV1Request) returns (LobbyServiceSearchRoomsV1Response);
+  rpc CreateRoomV1(LobbyServiceCreateRoomV1Request) returns (LobbyServiceCreateRoomV1Response);
+  rpc EditRoomV1(LobbyServiceEditRoomV1Request) returns (LobbyServiceEditRoomV1Response);
+  rpc DeleteRoomV1(LobbyServiceDeleteRoomV1Request) returns (LobbyServiceDeleteRoomV1Response);
+  rpc JoinRoomV1(LobbyServiceJoinRoomV1Request) returns (LobbyServiceJoinRoomV1Response);
+  rpc LeaveRoomV1(LobbyServiceLeaveRoomV1Request) returns (LobbyServiceLeaveRoomV1Response);
+}
+
+message LobbyServiceSearchRoomsV1Request {
+  repeated resource.RoomType types = 1;
+}
+
+message LobbyServiceSearchRoomsV1Response {
+  repeated resource.Room rooms = 1;
+}
+
+message LobbyServiceCreateRoomV1Request {
+  resource.RoomType type = 1;
+  int64 max_capacity = 2;
+  string secret = 3;
+  bytes details = 4;
+}
+
+message LobbyServiceCreateRoomV1Response {
+  resource.Room room = 1;
+}
+
+message LobbyServiceEditRoomV1Request {
+  string room_id = 1;
+  int64 max_capacity = 2;
+  string secret = 3;
+  bytes details = 4;
+}
+
+message LobbyServiceEditRoomV1Response {
+  resource.Room room = 1;
+}
+
+message LobbyServiceDeleteRoomV1Request {
+  string room_id = 1;
+}
+
+message LobbyServiceDeleteRoomV1Response {}
+
+message LobbyServiceJoinRoomV1Request {
+  string room_id = 1;
+  string secret = 2;
+}
+
+message LobbyServiceJoinRoomV1Response {
+  // https://skyway.ntt.com/ja/docs/user-guide/authentication/skyway-auth-token/
+  string skyway_auth_token = 1;
+  string peer_id = 2;
+}
+
+message LobbyServiceLeaveRoomV1Request {
+  string room_id = 1;
+}
+
+message LobbyServiceLeaveRoomV1Response {}

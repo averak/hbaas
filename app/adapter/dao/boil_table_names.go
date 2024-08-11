@@ -8,17 +8,25 @@ var TableNames = struct {
 	GlobalKVSEntries    string
 	LeaderBoard         string
 	LeaderBoardScores   string
+	MasterData          string
 	PrivateKVSEntries   string
 	PrivateKVSEtags     string
+	RoomUsers           string
+	Rooms               string
 	UserAuthentications string
+	UserProfiles        string
 	Users               string
 }{
 	Echos:               "echos",
 	GlobalKVSEntries:    "global_kvs_entries",
 	LeaderBoard:         "leader_board",
 	LeaderBoardScores:   "leader_board_scores",
+	MasterData:          "master_data",
 	PrivateKVSEntries:   "private_kvs_entries",
 	PrivateKVSEtags:     "private_kvs_etags",
+	RoomUsers:           "room_users",
+	Rooms:               "rooms",
 	UserAuthentications: "user_authentications",
+	UserProfiles:        "user_profiles",
 	Users:               "users",
 }

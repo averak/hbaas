@@ -6,6 +6,7 @@ import (
 
 	"github.com/averak/hbaas/app/adapter/repoimpl/authentication_repoimpl"
 	"github.com/averak/hbaas/app/adapter/repoimpl/private_kvs_repoimpl"
+	"github.com/averak/hbaas/app/adapter/repoimpl/user_profile_repoimpl"
 	"github.com/averak/hbaas/app/adapter/repoimpl/user_repoimpl"
 	"github.com/averak/hbaas/app/domain/repository"
 	"github.com/averak/hbaas/app/domain/repository/transaction"
@@ -14,13 +15,15 @@ import (
 )
 
 var repos = struct {
-	UserRepo       repository.UserRepository
-	AuthRepo       repository.AuthenticationRepository
-	PrivateKVSRepo repository.PrivateKVSRepository
+	UserRepo        repository.UserRepository
+	UserProfileRepo repository.UserProfileRepository
+	AuthRepo        repository.AuthenticationRepository
+	PrivateKVSRepo  repository.PrivateKVSRepository
 }{
-	UserRepo:       user_repoimpl.NewRepository(),
-	AuthRepo:       authentication_repoimpl.NewRepository(),
-	PrivateKVSRepo: private_kvs_repoimpl.NewRepository(),
+	UserRepo:        user_repoimpl.NewRepository(),
+	UserProfileRepo: user_profile_repoimpl.NewRepository(),
+	AuthRepo:        authentication_repoimpl.NewRepository(),
+	PrivateKVSRepo:  private_kvs_repoimpl.NewRepository(),
 }
 
 func Setup(t *testing.T, ctx context.Context, data ...user_builder.Data) {
@@ -36,6 +39,13 @@ func Setup(t *testing.T, ctx context.Context, data ...user_builder.Data) {
 			err := repos.UserRepo.Save(ctx, tx, d.User)
 			if err != nil {
 				return err
+			}
+
+			if d.Profile != nil {
+				err = repos.UserProfileRepo.Save(ctx, tx, *d.Profile)
+				if err != nil {
+					return err
+				}
 			}
 
 			if d.Authentication != nil {

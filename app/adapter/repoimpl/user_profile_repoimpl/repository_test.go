@@ -1,4 +1,4 @@
-package user_repoimpl
+package user_profile_repoimpl
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 
 	"github.com/averak/hbaas/app/adapter/dao"
 	"github.com/averak/hbaas/app/domain/model"
-	"github.com/averak/hbaas/app/domain/repository"
 	"github.com/averak/hbaas/app/domain/repository/transaction"
 	"github.com/averak/hbaas/testutils"
 	"github.com/averak/hbaas/testutils/faker"
@@ -15,6 +14,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRepository_Get(t *testing.T) {
@@ -27,37 +27,34 @@ func TestRepository_Get(t *testing.T) {
 		name    string
 		seeds   []fixture.Seed
 		args    args
-		want    model.User
+		want    model.UserProfile
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
 			name: "レコードが存在する => 取得できる",
 			seeds: []fixture.Seed{
 				&dao.User{
-					ID:     faker.UUIDv5("u1").String(),
-					Email:  "u1@example.com",
-					Status: int(model.UserStatusActive),
+					ID: faker.UUIDv5("u1").String(),
+				},
+				&dao.UserProfile{
+					UserID:  faker.UUIDv5("u1").String(),
+					Content: []byte("value"),
 				},
 			},
 			args: args{
 				userID: faker.UUIDv5("u1"),
 			},
-			want: model.User{
-				ID:     faker.UUIDv5("u1"),
-				Email:  "u1@example.com",
-				Status: model.UserStatusActive,
-			},
+			want:    mustUserProfile(t, faker.UUIDv5("u1"), []byte("value")),
 			wantErr: assert.NoError,
 		},
 		{
-			name:  "レコードが存在しない => エラー",
+			name:  "レコードが存在しない => デフォルト値を返す",
 			seeds: []fixture.Seed{},
 			args: args{
-				userID: faker.UUIDv5("not exists"),
+				userID: faker.UUIDv5("u1"),
 			},
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorIs(t, err, repository.ErrUserNotFound)
-			},
+			want:    mustUserProfile(t, faker.UUIDv5("u1"), nil),
+			wantErr: assert.NoError,
 		},
 	}
 	for _, tt := range tests {
@@ -65,7 +62,7 @@ func TestRepository_Get(t *testing.T) {
 			fixture.SetupSeeds(t, context.Background(), tt.seeds...)
 			defer testutils.Teardown(t)
 
-			var got model.User
+			var got model.UserProfile
 			err := conn.BeginRoTransaction(context.Background(), func(ctx context.Context, tx transaction.Transaction) error {
 				r := Repository{}
 				var err error
@@ -93,46 +90,49 @@ func TestRepository_GetByUserIDs(t *testing.T) {
 		name    string
 		seeds   []fixture.Seed
 		args    args
-		want    []model.User
+		want    []model.UserProfile
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
 			name: "ユーザIDで検索できる",
 			seeds: []fixture.Seed{
 				&dao.User{
-					ID:     faker.UUIDv5("u1").String(),
-					Email:  "e1",
-					Status: int(model.UserStatusActive),
+					ID:    faker.UUIDv5("u1").String(),
+					Email: faker.Email(),
+				},
+				&dao.UserProfile{
+					UserID:  faker.UUIDv5("u1").String(),
+					Content: []byte("v1"),
 				},
 				&dao.User{
-					ID:     faker.UUIDv5("u2").String(),
-					Email:  "e2",
-					Status: int(model.UserStatusPending),
+					ID:    faker.UUIDv5("u2").String(),
+					Email: faker.Email(),
+				},
+				&dao.UserProfile{
+					UserID:  faker.UUIDv5("u2").String(),
+					Content: []byte("v2"),
 				},
 				&dao.User{
-					ID:     faker.UUIDv5("u3").String(),
-					Email:  "e3",
-					Status: int(model.UserStatusActive),
+					ID:    faker.UUIDv5("u3").String(),
+					Email: faker.Email(),
+				},
+				&dao.UserProfile{
+					UserID:  faker.UUIDv5("u3").String(),
+					Content: []byte("v3"),
 				},
 			},
 			args: args{
 				userIDs: []uuid.UUID{
 					faker.UUIDv5("u1"),
 					faker.UUIDv5("u2"),
+
+					// 存在しないユーザは無視される
 					faker.UUIDv5("not_exists"),
 				},
 			},
-			want: []model.User{
-				{
-					ID:     faker.UUIDv5("u1"),
-					Email:  "e1",
-					Status: model.UserStatusActive,
-				},
-				{
-					ID:     faker.UUIDv5("u2"),
-					Email:  "e2",
-					Status: model.UserStatusPending,
-				},
+			want: []model.UserProfile{
+				mustUserProfile(t, faker.UUIDv5("u1"), []byte("v1")),
+				mustUserProfile(t, faker.UUIDv5("u2"), []byte("v2")),
 			},
 			wantErr: assert.NoError,
 		},
@@ -141,7 +141,7 @@ func TestRepository_GetByUserIDs(t *testing.T) {
 			args: args{
 				userIDs: []uuid.UUID{},
 			},
-			want:    []model.User{},
+			want:    []model.UserProfile{},
 			wantErr: assert.NoError,
 		},
 	}
@@ -150,7 +150,7 @@ func TestRepository_GetByUserIDs(t *testing.T) {
 			fixture.SetupSeeds(t, context.Background(), tt.seeds...)
 			defer testutils.Teardown(t)
 
-			var got []model.User
+			var got []model.UserProfile
 			err := conn.BeginRoTransaction(context.Background(), func(ctx context.Context, tx transaction.Transaction) error {
 				r := Repository{}
 				var err error
@@ -172,33 +172,37 @@ func TestRepository_Save(t *testing.T) {
 	conn := testutils.MustDBConn(t)
 
 	type args struct {
-		user model.User
+		profile model.UserProfile
 	}
 	tests := []struct {
-		name    string
-		seeds   []fixture.Seed
-		args    args
-		want    []*dao.User
-		wantErr assert.ErrorAssertionFunc
+		name  string
+		seeds []fixture.Seed
+		args  args
+		then  func(*testing.T, []*dao.UserProfile, error)
 	}{
 		{
-			name:  "PK が存在しない => 作成する",
-			seeds: []fixture.Seed{},
+			name: "PK が存在しない => 作成する",
+			seeds: []fixture.Seed{
+				&dao.User{
+					ID: faker.UUIDv5("u1").String(),
+				},
+			},
 			args: args{
-				user: model.User{
-					ID:     faker.UUIDv5("u1"),
-					Email:  "u1@example.com",
-					Status: model.UserStatusActive,
-				},
+				profile: mustUserProfile(t, faker.UUIDv5("u1"), []byte("value")),
 			},
-			want: []*dao.User{
-				{
-					ID:     faker.UUIDv5("u1").String(),
-					Email:  "u1@example.com",
-					Status: int(model.UserStatusActive),
-				},
+			then: func(t *testing.T, dtos []*dao.UserProfile, err error) {
+				require.NoError(t, err)
+
+				wantDtos := []*dao.UserProfile{
+					{
+						UserID:  faker.UUIDv5("u1").String(),
+						Content: []byte("value"),
+					},
+				}
+				if diff := cmp.Diff(wantDtos, dtos, cmpopts.IgnoreFields(dao.UserProfile{}, "CreatedAt", "UpdatedAt")); diff != "" {
+					t.Errorf("(-want, +got)\n%s", diff)
+				}
 			},
-			wantErr: assert.NoError,
 		},
 		{
 			name: "PK が存在する => 更新する",
@@ -206,42 +210,27 @@ func TestRepository_Save(t *testing.T) {
 				&dao.User{
 					ID: faker.UUIDv5("u1").String(),
 				},
+				&dao.UserProfile{
+					UserID:  faker.UUIDv5("u1").String(),
+					Content: []byte("old"),
+				},
 			},
 			args: args{
-				user: model.User{
-					ID:     faker.UUIDv5("u1"),
-					Email:  "u1@example.com",
-					Status: model.UserStatusActive,
-				},
+				profile: mustUserProfile(t, faker.UUIDv5("u1"), []byte("new")),
 			},
-			want: []*dao.User{
-				{
-					ID:     faker.UUIDv5("u1").String(),
-					Email:  "u1@example.com",
-					Status: int(model.UserStatusActive),
-				},
+			then: func(t *testing.T, dtos []*dao.UserProfile, err error) {
+				require.NoError(t, err)
+
+				wantDtos := []*dao.UserProfile{
+					{
+						UserID:  faker.UUIDv5("u1").String(),
+						Content: []byte("new"),
+					},
+				}
+				if diff := cmp.Diff(wantDtos, dtos, cmpopts.IgnoreFields(dao.UserProfile{}, "CreatedAt", "UpdatedAt")); diff != "" {
+					t.Errorf("(-want, +got)\n%s", diff)
+				}
 			},
-			wantErr: assert.NoError,
-		},
-		{
-			name:  "ステータス == Deactivated の場合 => IsDeleted が true になる",
-			seeds: []fixture.Seed{},
-			args: args{
-				user: model.User{
-					ID:     faker.UUIDv5("u1"),
-					Email:  "u1@example.com",
-					Status: model.UserStatusDeactivated,
-				},
-			},
-			want: []*dao.User{
-				{
-					ID:        faker.UUIDv5("u1").String(),
-					Email:     "u1@example.com",
-					Status:    int(model.UserStatusDeactivated),
-					IsDeleted: true,
-				},
-			},
-			wantErr: assert.NoError,
 		},
 	}
 	for _, tt := range tests {
@@ -249,26 +238,29 @@ func TestRepository_Save(t *testing.T) {
 			fixture.SetupSeeds(t, context.Background(), tt.seeds...)
 			defer testutils.Teardown(t)
 
-			var got []*dao.User
+			var dtos []*dao.UserProfile
 			err := conn.BeginRwTransaction(context.Background(), func(ctx context.Context, tx transaction.Transaction) error {
 				r := Repository{}
-				err := r.Save(ctx, tx, tt.args.user)
+				err := r.Save(ctx, tx, tt.args.profile)
 				if err != nil {
 					return err
 				}
 
-				got, err = dao.Users().All(ctx, tx)
+				dtos, err = dao.UserProfiles().All(ctx, tx)
 				if err != nil {
 					return err
 				}
 				return nil
 			})
-			if !tt.wantErr(t, err) {
-				return
-			}
-			if diff := cmp.Diff(tt.want, got, cmpopts.IgnoreFields(dao.User{}, "CreatedAt", "UpdatedAt")); diff != "" {
-				t.Errorf("(-want, +got)\n%s", diff)
-			}
+			tt.then(t, dtos, err)
 		})
 	}
+}
+
+func mustUserProfile(t *testing.T, userID uuid.UUID, content []byte) model.UserProfile {
+	profile, err := model.NewUserProfile(userID, content)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return profile
 }

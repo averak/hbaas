@@ -9,7 +9,6 @@ service UserService {
   // ユーザがアクティベートされるまで、ユーザのプロフィールは非公開になります。
   rpc ActivateV1(UserServiceActivateV1Request) returns (UserServiceActivateV1Response) {
     option (custom_option.method_option) = {
-      skip_authenticate: true
       skip_user_status_check: true
       method_error_definitions: [
         {
@@ -21,11 +20,12 @@ service UserService {
     };
   }
 
-  // プロフィール属性はプロダクトによって異なり、汎化が難いためバイナリデータとして扱います。
-  // プロダクトごとに、独自のスキーマを定義してください。
+  // プロフィールを検索します。
+  rpc SearchProfilesV1(UserServiceSearchProfilesV1Request) returns (UserServiceSearchProfilesV1Response) {}
+
+  // プロフィールを編集します。
   rpc EditProfileV1(UserServiceEditProfileV1Request) returns (UserServiceEditProfileV1Response) {
     option (custom_option.method_option) = {
-      skip_authenticate: true
       skip_user_status_check: true
       method_error_definitions: [
         {
@@ -48,8 +48,17 @@ message UserServiceActivateV1Request {}
 
 message UserServiceActivateV1Response {}
 
+message UserServiceSearchProfilesV1Request {
+  repeated string user_ids = 1;
+}
+
+message UserServiceSearchProfilesV1Response {
+  repeated resource.UserProfile profiles = 1;
+}
+
 message UserServiceEditProfileV1Request {
-  resource.UserProfile profile = 1;
+  resource.UserProfile profile = 1 [deprecated = true];
+  bytes data = 2;
 }
 
 message UserServiceEditProfileV1Response {}
