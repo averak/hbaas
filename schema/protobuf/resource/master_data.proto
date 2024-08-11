@@ -1,0 +1,12 @@
+syntax = "proto3";
+package resource;
+
+import "google/protobuf/timestamp.proto";
+
+message MasterData {
+  int64 revision = 1;
+  bytes content = 2;
+  bool is_active = 3;
+  string comment = 4;
+  google.protobuf.Timestamp created_at = 5;
+}
