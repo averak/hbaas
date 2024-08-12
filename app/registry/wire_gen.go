@@ -12,6 +12,7 @@ import (
 	"github.com/averak/hbaas/app/adapter/handler/debug/echo"
 	"github.com/averak/hbaas/app/adapter/handler/global_kvs"
 	"github.com/averak/hbaas/app/adapter/handler/leader_board"
+	"github.com/averak/hbaas/app/adapter/handler/master_data"
 	"github.com/averak/hbaas/app/adapter/handler/private_kvs"
 	"github.com/averak/hbaas/app/adapter/handler/session"
 	"github.com/averak/hbaas/app/adapter/handler/user"
@@ -20,6 +21,7 @@ import (
 	"github.com/averak/hbaas/app/adapter/repoimpl/echo_repoimpl"
 	"github.com/averak/hbaas/app/adapter/repoimpl/global_kvs_repoimpl"
 	"github.com/averak/hbaas/app/adapter/repoimpl/leader_board_repoimpl"
+	"github.com/averak/hbaas/app/adapter/repoimpl/master_data_repoimpl"
 	"github.com/averak/hbaas/app/adapter/repoimpl/private_kvs_repoimpl"
 	"github.com/averak/hbaas/app/adapter/repoimpl/user_profile_repoimpl"
 	"github.com/averak/hbaas/app/adapter/repoimpl/user_repoimpl"
@@ -32,6 +34,7 @@ import (
 	"github.com/averak/hbaas/app/usecase/echo_usecase"
 	"github.com/averak/hbaas/app/usecase/global_kvs_usecase"
 	"github.com/averak/hbaas/app/usecase/leader_board_usecase"
+	"github.com/averak/hbaas/app/usecase/master_data_usecase"
 	"github.com/averak/hbaas/app/usecase/private_kvs_usecase"
 	"github.com/averak/hbaas/app/usecase/session_usecase"
 	"github.com/averak/hbaas/app/usecase/user_usecase"
@@ -55,6 +58,9 @@ func InitializeAPIServerMux(ctx context.Context) (*http.ServeMux, error) {
 	leaderBoardRepository := leader_board_repoimpl.NewRepository()
 	leader_board_usecaseUsecase := leader_board_usecase.NewUsecase(connection, leaderBoardRepository)
 	leaderBoardServiceHandler := leader_board.NewHandler(leader_board_usecaseUsecase, adviceAdvice)
+	masterDataRepository := master_data_repoimpl.NewRepository()
+	master_data_usecaseUsecase := master_data_usecase.NewUsecase(connection, masterDataRepository)
+	masterDataServiceHandler := master_data.NewHandler(master_data_usecaseUsecase, adviceAdvice)
 	privateKVSRepository := private_kvs_repoimpl.NewRepository()
 	private_kvs_usecaseUsecase := private_kvs_usecase.NewUsecase(connection, privateKVSRepository)
 	privateKVSServiceHandler := private_kvs.NewHandler(private_kvs_usecaseUsecase, adviceAdvice)
@@ -77,7 +83,7 @@ func InitializeAPIServerMux(ctx context.Context) (*http.ServeMux, error) {
 	echoRepository := echo_repoimpl.NewRepository()
 	echo_usecaseUsecase := echo_usecase.NewUsecase(connection, echoRepository)
 	echoServiceHandler := echo.NewHandler(echo_usecaseUsecase, adviceAdvice)
-	serveMux := handler.New(globalKVSServiceHandler, leaderBoardServiceHandler, privateKVSServiceHandler, sessionServiceHandler, userServiceHandler, echoServiceHandler)
+	serveMux := handler.New(globalKVSServiceHandler, leaderBoardServiceHandler, masterDataServiceHandler, privateKVSServiceHandler, sessionServiceHandler, userServiceHandler, echoServiceHandler)
 	return serveMux, nil
 }
 

@@ -7,6 +7,7 @@ import (
 	"github.com/averak/hbaas/app/adapter/handler/debug/echo"
 	"github.com/averak/hbaas/app/adapter/handler/global_kvs"
 	"github.com/averak/hbaas/app/adapter/handler/leader_board"
+	"github.com/averak/hbaas/app/adapter/handler/master_data"
 	"github.com/averak/hbaas/app/adapter/handler/private_kvs"
 	"github.com/averak/hbaas/app/adapter/handler/session"
 	"github.com/averak/hbaas/app/adapter/handler/user"
@@ -20,6 +21,7 @@ import (
 var SuperSet = wire.NewSet(
 	global_kvs.NewHandler,
 	leader_board.NewHandler,
+	master_data.NewHandler,
 	private_kvs.NewHandler,
 	session.NewHandler,
 	user.NewHandler,
@@ -30,6 +32,7 @@ var SuperSet = wire.NewSet(
 func New(
 	globalKVS apiconnect.GlobalKVSServiceHandler,
 	leaderBoard apiconnect.LeaderBoardServiceHandler,
+	masterData apiconnect.MasterDataServiceHandler,
 	privateKVS apiconnect.PrivateKVSServiceHandler,
 	session apiconnect.SessionServiceHandler,
 	user apiconnect.UserServiceHandler,
@@ -39,6 +42,7 @@ func New(
 	mux := http.NewServeMux()
 	mux.Handle(apiconnect.NewGlobalKVSServiceHandler(globalKVS, opts))
 	mux.Handle(apiconnect.NewLeaderBoardServiceHandler(leaderBoard, opts))
+	mux.Handle(apiconnect.NewMasterDataServiceHandler(masterData, opts))
 	mux.Handle(apiconnect.NewPrivateKVSServiceHandler(privateKVS, opts))
 	mux.Handle(apiconnect.NewSessionServiceHandler(session, opts))
 	mux.Handle(apiconnect.NewUserServiceHandler(user, opts))
