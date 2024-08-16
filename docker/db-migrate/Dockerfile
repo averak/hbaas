@@ -1,4 +1,4 @@
-FROM golang:1.22 AS builder
+FROM golang:1.23 AS builder
 
 ENV POSTGRES_USER=db
 ENV POSTGRES_PASSWORD=db
