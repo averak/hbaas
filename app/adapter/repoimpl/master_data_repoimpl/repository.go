@@ -26,6 +26,8 @@ func (r Repository) Get(ctx context.Context, tx transaction.Transaction, revisio
 	ctx, span := trace.StartSpan(ctx, "master_data_repoimpl.Get")
 	defer span.End()
 
+	// TODO: マスターデータをキャッシュする。なお、複数世代キャッシュする必要はない。
+
 	dto, err := dao.FindMasterDatum(ctx, tx, revision)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
